@@ -1,785 +1,315 @@
-const { error, log } = require('console');
 const fs = require('fs');
-const { db } = require('./db');
+const { db, db_promise } = require('./db');
 
-
-const readData = () => {
-    if (fs.existsSync('match_data.json')) {
-        const data = fs.readFileSync('match_data.json');
+const readData = (fileName) => {
+    if (fs.existsSync(fileName)) {
+        const data = fs.readFileSync(fileName);
         return JSON.parse(data);
     }
-    return [];
-};
-const writeData = (data) => {
-    fs.writeFileSync('match_data.json', JSON.stringify(data, null, 2));
-};
-const read_upcoming_match_data = () => {
-    if (fs.existsSync('upcoming_match_data.json')) {
-        const data = fs.readFileSync('upcoming_match_data.json');
-        return JSON.parse(data);
+    else {
+        return `${fileName} not found`
     }
-    return [];
 };
-const write_upcoming_match_data = (data) => {
-    fs.writeFileSync('upcoming_match_data.json', JSON.stringify(data, null, 2));
+const writeData = (fileName, data) => {
+    fs.writeFileSync(fileName, JSON.stringify(data, null, 2));
 };
+async function upload_overs() {
+    console.time("Execution Time");
+    let overData = await readData('overs_data.json');
 
+    for (const matchId in overData) {
+        const inningsData = overData[matchId];
+        let last_stored_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;";
+        let [last_stored_over_result] = await db_promise.execute(last_stored_over, [matchId]);
+        let last_innings = 1;
+        let last_bowled_over = 1;
 
-let matchData = {
-    "msg": "Data found.",
-    "status": true,
-    "data": {
-        "1": [
-            {
-                "overs": [
-                    "4",
-                    '2',
-                    '1',
-                    '6'
-                ],
-                "team": {
-                    "over": 31,
-                    "cr_rate": "3.93",
-                    "bowler": "Moises Henriques",
-                    "runs": 13,
-                    "score": "118-4",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "4",
-                    "2",
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "1"
-                ],
-                "team": {
-                    "over": 30,
-                    "cr_rate": "3.93",
-                    "bowler": "Moises Henriques",
-                    "runs": 5,
-                    "score": "118-4",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "W",
-                    "1",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 29,
-                    "cr_rate": "3.90",
-                    "bowler": "Ben Dwarshuis",
-                    "runs": 2,
-                    "score": "113-4",
-                    "wkts": 1,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 28,
-                    "cr_rate": "3.96",
-                    "bowler": "Moises Henriques",
-                    "runs": 1,
-                    "score": "111-3",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "W",
-                    "WB",
-                    "4",
-                    "4",
-                    "0",
-                    "1"
-                ],
-                "team": {
-                    "over": 27,
-                    "cr_rate": "4.07",
-                    "bowler": "Ben Dwarshuis",
-                    "runs": 10,
-                    "score": "110-3",
-                    "wkts": 1,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "1",
-                    "0",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 26,
-                    "cr_rate": "4.00",
-                    "bowler": "Chris Green",
-                    "runs": 3,
-                    "score": "104-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "WB",
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 25,
-                    "cr_rate": "4.04",
-                    "bowler": "Liam Hatcher",
-                    "runs": 1,
-                    "score": "101-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "0",
-                    "1",
-                    "1",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 24,
-                    "cr_rate": "4.00",
-                    "bowler": "Chris Green",
-                    "runs": 4,
-                    "score": "96-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 23,
-                    "cr_rate": "4.00",
-                    "bowler": "Liam Hatcher",
-                    "runs": 1,
-                    "score": "92-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "1"
-                ],
-                "team": {
-                    "over": 22,
-                    "cr_rate": "4.14",
-                    "bowler": "Chris Green",
-                    "runs": 2,
-                    "score": "91-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "0",
-                    "0",
-                    "2",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 21,
-                    "cr_rate": "4.24",
-                    "bowler": "Liam Hatcher",
-                    "runs": 4,
-                    "score": "89-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "0",
-                    "1",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 20,
-                    "cr_rate": "4.25",
-                    "bowler": "Charlie Anderson",
-                    "runs": 2,
-                    "score": "85-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "0",
-                    "4",
-                    "0",
-                    "3",
-                    "0"
-                ],
-                "team": {
-                    "over": 19,
-                    "cr_rate": "4.37",
-                    "bowler": "Liam Hatcher",
-                    "runs": 8,
-                    "score": "83-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "4",
-                    "0",
-                    "4",
-                    "0",
-                    "1"
-                ],
-                "team": {
-                    "over": 18,
-                    "cr_rate": "4.17",
-                    "bowler": "Charlie Anderson",
-                    "runs": 10,
-                    "score": "75-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "1",
-                    "0",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 17,
-                    "cr_rate": "3.82",
-                    "bowler": "Jack Edwards",
-                    "runs": 2,
-                    "score": "65-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 16,
-                    "cr_rate": "3.94",
-                    "bowler": "Charlie Anderson",
-                    "runs": 2,
-                    "score": "63-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 15,
-                    "cr_rate": "4.07",
-                    "bowler": "Jack Edwards",
-                    "runs": 1,
-                    "score": "61-2",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "0",
-                    "W",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 14,
-                    "cr_rate": "4.29",
-                    "bowler": "Moises Henriques",
-                    "runs": 0,
-                    "score": "60-2",
-                    "wkts": 1,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "4",
-                    "0",
-                    "1",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 13,
-                    "cr_rate": "4.62",
-                    "bowler": "Jack Edwards",
-                    "runs": 5,
-                    "score": "60-1",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "4",
-                    "2",
-                    "2",
-                    "0",
-                    "0",
-                    "1",
-                    "2"
-                ],
-                "team": {
-                    "over": 12,
-                    "cr_rate": "4.58",
-                    "bowler": "Moises Henriques",
-                    "runs": 11,
-                    "score": "55-1",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 11,
-                    "cr_rate": "4.18",
-                    "bowler": "Jack Edwards",
-                    "runs": 0,
-                    "score": "46-1",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 10,
-                    "cr_rate": "4.60",
-                    "bowler": "Moises Henriques",
-                    "runs": 1,
-                    "score": "46-1",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "1",
-                    "1",
-                    "4",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 9,
-                    "cr_rate": "5.00",
-                    "bowler": "Jack Edwards",
-                    "runs": 7,
-                    "score": "45-1",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "4",
-                    "1",
-                    "0",
-                    "W"
-                ],
-                "team": {
-                    "over": 8,
-                    "cr_rate": "4.75",
-                    "bowler": "Moises Henriques",
-                    "runs": 5,
-                    "score": "38-1",
-                    "wkts": 1,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "2",
-                    "0",
-                    "4",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 7,
-                    "cr_rate": "4.71",
-                    "bowler": "Ben Dwarshuis",
-                    "runs": 7,
-                    "score": "33-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "4",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 6,
-                    "cr_rate": "4.33",
-                    "bowler": "Charlie Anderson",
-                    "runs": 5,
-                    "score": "26-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "4",
-                    "0",
-                    "4",
-                    "1",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 5,
-                    "cr_rate": "4.20",
-                    "bowler": "Ben Dwarshuis",
-                    "runs": 9,
-                    "score": "21-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "WB",
-                    "1",
-                    "3",
-                    "WB"
-                ],
-                "team": {
-                    "over": 4,
-                    "cr_rate": "3.00",
-                    "bowler": "Charlie Anderson",
-                    "runs": 6,
-                    "score": "12-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "1",
-                    "0"
-                ],
-                "team": {
-                    "over": 3,
-                    "cr_rate": "2.00",
-                    "bowler": "Ben Dwarshuis",
-                    "runs": 2,
-                    "score": "6-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "0",
-                    "2",
-                    "0",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 2,
-                    "cr_rate": "2.00",
-                    "bowler": "Charlie Anderson",
-                    "runs": 2,
-                    "score": "4-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            },
-            {
-                "overs": [
-                    "0",
-                    "2",
-                    "0",
-                    "0",
-                    "0",
-                    "0"
-                ],
-                "team": {
-                    "over": 1,
-                    "cr_rate": "2.00",
-                    "bowler": "Ben Dwarshuis",
-                    "runs": 2,
-                    "score": "2-0",
-                    "wkts": 0,
-                    "team": "TAS"
-                }
-            }
-        ]
-    }
-}
-let matchInfo = {
-    "msg": "Data found.",
-    "status": true,
-    "data": [
-        {
-            "max_rate": 1.15,
-            "venue": "Bellerive Oval, Hobart",
-            "match_status": "Live",
-            "s_ovr": "",
-            "venue_id": 22,
-            "series": "Australia Domestic One-Day Cup 2024-25",
-            "batting_team": "404",
-            "team_a_img": "https:\/\/cricketchampion.co.in\/webroot\/img\/teams\/502355917_team.png",
-            "toss": "New South Wales won the toss and elected to bowl",
-            "match_time": "05:35 AM",
-            "match_type": "ODI",
-            "team_a_scores_over": [
-                {
-                    "over": "47.1",
-                    "score": "205-10"
-                }
-            ],
-            "fav_team": "NSW",
-            "team_b_id": 404,
-            "team_b_score": {
-                "2": {
-                    "ball": 56,
-                    "wicket": 2,
-                    "over": "9.2",
-                    "score": 45
-                },
-                "team_id": 404
-            },
-            "match_id": 5768,
-            "matchs": "15th Match",
-            "is_hundred": 1,
-            "team_a_over": "47.1",
-            "team_b_scores_over": [
-                {
-                    "over": "9.2",
-                    "score": "45-2"
-                }
-            ],
-            "team_b_over": "9.2",
-            "team_a_id": 407,
-            "match_date": "05-Feb",
-            "s_min": "0",
-            "need_run_ball": "New South Wales NEED 161 RUNS IN 40.4 OVERS TO WIN",
-            "team_a_scores": "205-10",
-            "min_rate": 1.14,
-            "team_a": "Tasmania",
-            "current_inning": "2",
-            "balling_team": "407",
-            "trail_lead": "",
-            "team_b_short": "NSW",
-            "team_b": "New South Wales",
-            "series_type": "Domestic",
-            "team_b_scores": "405-2",
-            "s_max": "0",
-            "session": null,
-            "team_a_short": "TAS",
-            "team_a_score": {
-                "1": {
-                    "ball": 283,
-                    "wicket": "10",
-                    "over": "47.1",
-                    "score": "205"
-                },
-                "team_id": 407
-            },
-            "result": "",
-            "series_id": 418,
-            "team_b_img": "https:\/\/cricketchampion.co.in\/webroot\/img\/teams\/1864323817_team.jpg"
+        if (last_stored_over_result.length > 0) {
+            last_innings = last_stored_over_result[0].innings;
+            last_bowled_over = last_stored_over_result[0].over_number;
         }
-    ]
+
+        let new_over_data = {};
+        for (const innings in inningsData) {
+            let data = [];
+            inningsData[innings].forEach(async (overData) => {
+                let teamInfo = overData.team;
+                if ((parseInt(innings) == last_innings && teamInfo.over >= last_bowled_over) || parseInt(innings) > last_innings) {
+                    data.push(overData);
+                    try {
+                        let [result] = await db_promise.execute(
+                            `INSERT INTO overs (match_id, over_number, bowler, runs, score, wickets, team, innings)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
+                            ON DUPLICATE KEY UPDATE 
+                            runs = VALUES(runs), 
+                            score = VALUES(score),     
+                            wickets = VALUES(wickets)`,
+                            [
+                                matchId,
+                                teamInfo.over,
+                                teamInfo.bowler,
+                                teamInfo.runs,
+                                teamInfo.score,
+                                teamInfo.wkts,
+                                teamInfo.team,
+                                innings
+                            ]
+                        );
+
+                        let overId = result.insertId;
+                        if (!overId) {
+                            const fetchOverIdQuery = `SELECT id FROM overs WHERE match_id = ? AND over_number = ? AND innings = ?`;
+                            const [overResult] = await db_promise.execute(fetchOverIdQuery, [matchId, teamInfo.over, innings]);
+
+                            if (overResult.length > 0) {
+                                overId = overResult[0].id;
+                            } else {
+                                console.error("Error: Over ID not found for match", matchId, "over", teamInfo.over);
+                                return;
+                            }
+                        }
+                        for (let index = 0; index < overData.overs.length; index++) {
+                            let outcome = overData.overs[index];
+                            try {
+                                await db_promise.execute(
+                                    `INSERT INTO deliveries (over_id, ball_number, outcome) 
+                                    VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE outcome=VALUES(outcome)`,
+                                    [overId, index + 1, outcome]
+                                );
+                            } catch (err) {
+                                console.error("Error inserting delivery data:", err);
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Error inserting over data:", err);
+                    }
+                }
+            });
+            new_over_data[innings] = data;
+        }
+    }
+    console.timeEnd("Execution Time");
 }
-let data = {}
-function match_info() {
-    data["matchData"] = matchData
-    data["matchInfo"] = matchInfo
+//upload_overs()
+async function getOversData(matchId) {
+    try {
+
+        // Fetch all overs and deliveries in one go
+        let getOversQuery = `
+            SELECT o.id AS over_id, o.innings, o.over_number, o.bowler, 
+                   o.runs, o.score, o.wickets, o.team, d.ball_number, d.outcome
+            FROM overs o
+            LEFT JOIN deliveries d ON o.id = d.over_id
+            WHERE o.match_id = ?
+            ORDER BY o.innings ASC, o.over_number ASC, d.ball_number ASC
+        `;
+
+        let [rows] = await db_promise.execute(getOversQuery, [matchId]);
+
+        if (rows.length === 0) {
+            return 0;
+        }
+
+        let matchData = {};
+
+        for (const row of rows) {
+            const { innings, over_number, over_id, bowler, runs, score, wickets, team, ball_number, outcome } = row;
+
+            if (!matchData[innings]) {
+                matchData[innings] = [];
+            }
+
+            // Find existing over entry or create a new one
+            let lastOver = matchData[innings].find(over => over.over_number === over_number);
+            if (!lastOver) {
+                lastOver = {
+                    over_number,
+                    bowler,
+                    runs,
+                    score,
+                    wickets,
+                    team,
+                    overs: []
+                };
+                matchData[innings].push(lastOver);
+            }
+
+            // Add delivery if it exists
+            if (ball_number !== null) {
+                lastOver.overs.push(outcome);
+            }
+        }
+
+        return matchData;
+    } catch (error) {
+        console.error("Error fetching overs data:", error);
+        return 0;
+    }
+}
+async function getOverData(matchId, innings, overNumber) {
+    try {
+
+        // Query to fetch the specific over and its deliveries
+        let getOverQuery = `
+            SELECT o.id AS over_id, o.innings, o.over_number, o.bowler, 
+                   o.runs, o.score, o.wickets, o.team, d.ball_number, d.outcome
+            FROM overs o
+            LEFT JOIN deliveries d ON o.id = d.over_id
+            WHERE o.match_id = ? AND o.innings = ? AND o.over_number = ?
+            ORDER BY d.ball_number ASC
+        `;
+
+        let [rows] = await db_promise.execute(getOverQuery, [matchId, innings, overNumber]);
+        if (rows.length === 0) {
+            return 0;
+        }
+        let overData = {
+            over_id: rows[0].over_id,
+            over_number: overNumber,
+            bowler: rows[0].bowler,
+            runs: rows[0].runs,
+            score: rows[0].score,
+            wickets: rows[0].wickets,
+            team: rows[0].team,
+            overs: []
+        };
+        for (const row of rows) {
+            if (row.ball_number !== null) {
+                overData.overs.push(row.outcome);
+            }
+        }
+        return overData;
+    } catch (error) {
+        console.error("Error fetching over data:", error);
+        return null;
+    }
+}
+async function match_info(match_id) {
+    let data = {}
+    let oversData = await getOversData(match_id);
+    if (!oversData) {
+        oversData = {
+            status: "Failed",
+            error: "Overs not found"
+        }
+    }
+    let matchInfo = await readData('live_match_data.json').data
+    let matchData = matchInfo.filter(match => match.match_id == match_id)
+    if (!matchData.length) {
+        matchData = {
+            status: "Failed",
+            error: "Match details not found"
+        }
+        return 0
+    }
+    let [team_a_score] = await db_promise.execute(
+        "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
+        [match_id, matchData[0].team_a_short]
+    );
+
+    if (team_a_score.length) {
+        matchData[0].team_a_scores = team_a_score[0].score;
+
+        let [overs_count] = await db_promise.execute(
+            "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
+            [team_a_score[0].id]
+        );
+
+        matchData[0].team_a_over = `${team_a_score[0].over_number-1}.${overs_count[0]['COUNT(*)']}`;
+    } else {
+        matchData[0].team_a_scores = "0-0";
+        matchData[0].team_a_over = "0.0";
+    }
+
+    let [team_b_score] = await db_promise.execute(
+        "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
+        [match_id, matchData[0].team_b_short]
+    );
+
+    if (team_b_score.length) {
+        matchData[0].team_b_scores = team_b_score[0].score;
+
+        let [overs_count] = await db_promise.execute(
+            "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
+            [team_b_score[0].id]
+        );
+
+        matchData[0].team_b_over = `${team_b_score[0].over_number-1}.${overs_count[0]['COUNT(*)']}`;
+    } else {
+        matchData[0].team_b_scores = "0-0";
+        matchData[0].team_b_over = "0.0";
+    }
+    let [open_over] =await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?",[match_id])
+    if(!open_over.length){
+        return 0
+    }
+    data["oversData"] = [oversData]
+    data["matchInfo"] = matchData
+    data["openOver"]= open_over
     return data
 }
 const options = {
     method: 'GET',
     headers: {
-        'x-rapidapi-key': '8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a',
+        'x-rapidapi-key': '8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a',//vignesh :8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a //ama : d8a433c819msh5f6984e6e8d52d2p10084fjsn90afec517a0a //thaya:5beed19ad2mshfedc45ca698b32ep1e1644jsnf4cb628a6065  453326: 7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f
         'x-rapidapi-host': 'cricket-live-line1.p.rapidapi.com'
     }
 };
+async function update_live_matches() {
 
-
-async function update_matches() {
     const url_for_live = 'https://cricket-live-line1.p.rapidapi.com/liveMatches';
-    const url_for_overs = 'https://cricket-live-line1.p.rapidapi.com/match/6651/overHistory';
     try {
         const live_result = await fetch(url_for_live, options);
         const result = await live_result.json();
-        const over_result = await fetch(url_for_overs, options)
-        const over = await over_result.json();
-        let data = {}
-        data["matchInfo"] = result
-        data["matchData"] = over
-        writeData(data)
-        console.log("match data logged");
-
-        return result
+        writeData("live_match_data.json", result)
     } catch (error) {
         console.error(error);
     }
 }
-
-
+// update_live_matches()
+function update_overs() {
+    let live_match_query = "SELECT match_id FROM live_match_data"
+    db.query(live_match_query, async (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        liveMatchIds = []
+        result.map(match => liveMatchIds.push(match.match_id))
+        let overs_data = {}
+        const fetchOverData = async () => {
+            await Promise.all(
+                liveMatchIds.map(async (ids) => {
+                    const url_for_overs = `https://cricket-live-line1.p.rapidapi.com/match/${ids}/overHistory`;
+                    const over_result = await fetch(url_for_overs, options);
+                    const over = await over_result.json();
+                    overs_data[ids] = over.data;
+                })
+            );
+            writeData("overs_data.json", overs_data);
+        };
+        await fetchOverData();
+    })
+    console.timeEnd("Time");
+}
 async function upcoming_matches(matchList) {
-    let data = read_upcoming_match_data().data;
+    let data = readData('upcoming_match_data.json').data;
 
     if (matchList) {
         let m_data = data.filter(match => matchList.includes(match.match_id));
         return m_data.length ? m_data : 0;
     } else {
         let match_query = "SELECT match_id FROM matches WHERE 1";
-
-        // Use a promise to handle db.query asynchronously
         const result = await new Promise((resolve, reject) => {
             db.query(match_query, (error, results) => {
                 if (error) reject(error);
                 else resolve(results);
             });
         });
-
         let match_array = result.map(match => match.match_id);
         let m_data = data.filter(match => match_array.includes(match.match_id));
         return m_data.length ? m_data : 0;
     }
 }
-
-async function update_upcoming_matches() {
-    const urlForUpcomingMatches = 'https://cricket-live-line1.p.rapidapi.com/upcomingMatches';
-    try {
-        const upcomingMathches = await fetch(urlForUpcomingMatches, options)
-        let result = await upcomingMathches.json()
-        write_upcoming_match_data(result)
-
-    } catch (err) {
-        console.log(err);
-
-    }
-}
-//update_upcoming_matches()
-upcoming_matches();
-//update_matches()
-setInterval(() => {
-    //update_matches()
-}, 30000)
 function groupAndDisplayPrizes(prizeDistribution) {
     /**
      * Group and display prizes in the desired format.
@@ -865,42 +395,9 @@ function distributePrizes(registeredPlayers, entryFee, platformFeeFilled, platfo
         prizeDistribution
     };
 }
-
-// // Example usage
-// const registeredPlayers = 2000;
-// const totalEntry = 2000;
-// const entryFee = 75;
-// const platformFeeFilled = 24000;
-// const platformFeePercentNotFilled = 25;
-// // const prizeOrder = [[1, 420, 300]];
-// const cnFilled = registeredPlayers === totalEntry;
-
-
-function ranking_order(registeredPlayers,
-    entryFee,
-    platformFeeFilled,
-    platformFeePercentNotFilled,
-    prize_table,
-    cnFilled) {
-
-    
-    const result = distributePrizes(
-        registeredPlayers,
-        entryFee,
-        platformFeeFilled,
-        platformFeePercentNotFilled,
-        prize_table,
-        cnFilled
-    );
-
+function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformFeePercentNotFilled, prize_table, cnFilled) {
+    const result = distributePrizes(registeredPlayers, entryFee, platformFeeFilled, platformFeePercentNotFilled, prize_table, cnFilled);
     return (groupAndDisplayPrizes(result.prizeDistribution));
 }
 
-
-// console.log("Total Collection:", result.totalCollection);
-// console.log("Platform Fee:", result.platformFee);
-// console.log("Prize Pool:", result.prizePool);
-// console.log("Prize Distribution:");
-
-
-module.exports = { match_info, upcoming_matches, ranking_order };
+module.exports = { match_info, upcoming_matches, ranking_order, getOverData };

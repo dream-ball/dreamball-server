@@ -9,10 +9,9 @@ const { generateUser_id } = require('./user_id.js')
 const { validateJWT, generateJWT } = require('./jwt_token')
 const { db, db_promise } = require('./db');
 const { timeLeft } = require("./script.js");
-const { verify } = require('jsonwebtoken');
-const e = require('express');
-const { match_info, upcoming_matches, ranking_order } = require('./match_data.js');
-const { type } = require('os');
+const { match_info, upcoming_matches, ranking_order, getOverData } = require('./match_data.js');
+const { match } = require('assert');
+const { error } = require('console');
 const app = express();
 const port = 8080;
 
@@ -27,8 +26,6 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
-
-
 const razorpay = new Razorpay({
   key_id: 'rzp_test_GO24k5LqGpRyRK',
   key_secret: 'McNBNXvoWbX8llkHd3EggW4S',
@@ -106,7 +103,7 @@ app.get('/api/matches', (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
     const decoded_token = validateJWT(token)
-    const query = "select * from matches";
+    const query = "select * from matches ORDER BY s_no";
     db.query(query, (err, result) => {
       if (err) {
         res.status(500).json({ error: "Fetch Failed" })
@@ -135,16 +132,24 @@ app.get('/api/match/:id', async (req, res) => {
       res.status(400).json({ error: "Invalid match ID" });
       return;
     }
-    let match_data = await upcoming_matches([parseInt(id)]);
+    let match_query = "SELECT * FROM matches WHERE match_id=?"
+    db.query(match_query, [id], (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          status: "Failed",
+          msg: "Connection Error"
+        })
+      }
+      if (!result.length) {
+        return res.status(400).json({
+          status: "Failed",
+          msg: "No match data found"
+        })
+      }
+      res.json(JSON.parse(result[0].match_data))
+    })
 
-    if (!match_data.length) {
-      return res.status(400).json({
-        status: "Failed",
-        msg: "No match data found"
-      })
 
-    }
-    res.json(match_data[0])
   }
   catch (error) {
     res.status(400).json({
@@ -163,7 +168,7 @@ app.get('/api/contest/:id', (req, res) => {
       res.status(400).json({ error: "Invalid match ID" });
       return;
     }
-    const query = `select * from contest where match_id= ?`;
+    const query = `select * from contest where match_id= ? and status ='upcoming'`;
 
     db.query(query, [id], async (err, result) => {
       if (err) {
@@ -474,7 +479,6 @@ app.get('/api/user/contest/:match_id', (req, res) => {
 
   }
 })
-
 app.get('/api/rankings/:match_id/:contest_id', async (req, res) => {
 
   try {
@@ -548,37 +552,393 @@ app.get('/api/rankings/:match_id/:contest_id', async (req, res) => {
     })
   }
 })
+app.get('/api/my-matches', async (req, res) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ status: "Failed", msg: "No token provided" });
+  }
 
-app.get('/api/upcoming_matches', async (req, res) => {
+  try {
+    let decoded_token = validateJWT(token);
+    let userId = decoded_token.userId;
 
+    let select_query = "SELECT match_id FROM registered_contest WHERE user_id=? and status='upcoming'";
+    let live_query = "SELECT match_id FROM registered_contest WHERE user_id=? and status='live'";
+
+    let user_upcoming_matches = [];
+    let user_live_matches = [];
+
+    // Fetch upcoming matches
+    db.query(select_query, [userId], async (err, upcoming_result) => {
+      if (err) {
+        return res.status(500).json({ status: "Failed", error: "Connect Error" });
+      }
+
+      if (upcoming_result.length) {
+        let matchIds = upcoming_result.map(match => match.match_id);
+        let get_upcoming_match_query = `SELECT match_data FROM matches WHERE match_id IN (?)`;
+
+        db.query(get_upcoming_match_query, [matchIds], (err, result) => {
+          if (err) {
+            return res.status(500).json({ status: "Failed", error: "Connection Error" });
+          }
+          user_upcoming_matches = result.map(matches => JSON.parse(matches.match_data));
+
+          // Fetch live matches after upcoming matches are retrieved
+          db.query(live_query, [userId], (live_err, live_result) => {
+            if (live_err) {
+              return res.status(500).json({ status: "Failed", error: "Conection Error" });
+            }
+
+            if (live_result.length) {
+              let matchIds = live_result.map(match => match.match_id);
+              let get_live_match_query = `SELECT match_data FROM live_match_data WHERE match_id IN (?)`;
+
+              db.query(get_live_match_query, [matchIds], (live_match_err, live_match_result) => {
+                if (live_match_err) {
+                  return res.status(500).json({ status: "Failed", error: "Conection Error" });
+                }
+                user_live_matches = live_match_result.map(match => JSON.parse(match.match_data));
+
+                return res.json({ upcoming_matches: user_upcoming_matches, live_matches: user_live_matches });
+              });
+            } else {
+              return res.json({ upcoming_matches: user_upcoming_matches, live_matches: [] });
+            }
+          });
+        });
+      } else {
+        // If no upcoming matches, continue to fetch live matches
+        db.query(live_query, [userId], (live_err, live_result) => {
+          if (live_err) {
+            return res.status(500).json({ status: "Failed", error: "Conection Error" });
+          }
+
+          if (live_result.length) {
+            let matchIds = live_result.map(match => match.match_id);
+            let get_live_match_query = `SELECT match_data FROM live_match_data WHERE match_id IN (?)`;
+
+            db.query(get_live_match_query, [matchIds], (live_match_err, live_match_result) => {
+              if (live_match_err) {
+                return res.status(500).json({ status: "Failed", error: "Conection Error" });
+              }
+              user_live_matches = live_match_result.map(match => JSON.parse(match.match_data));
+
+              return res.json({ upcoming_matches: [], live_matches: user_live_matches });
+            });
+          } else {
+            return res.json({ upcoming_matches: [], live_matches: [] });
+          }
+        });
+      }
+    });
+
+  } catch (err) {
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+  }
+});
+app.get('/api/live_match/:match_id/info/', async (req, res) => {
+  let { match_id } = req.params
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
-    const decoded_token = validateJWT(token)
-    let upcoming_matches_data = await upcoming_matches();
-    if (!upcoming_matches_data.length) {
-      return res.status(404).json({
-        "Failed":"No data found"
-      })
-    }
-    else {
+    let decoded_token = validateJWT(token);
 
-      return res.json(upcoming_matches_data)
+    if (!Number.isInteger(Number(match_id))) {
+      res.status(400).json({ error: "Invalid match ID" });
+      return;
     }
-  } catch (error) {
+    let live_check_query = "SELECT * From live_match_data WHERE match_id=?"
+    db.query(live_check_query, [match_id], async (live_check_err, live_check_result) => {
+      if (live_check_err) {
+        res.status(500).json({
+          status: "Failed",
+          error: 'Connection error'
+        })
+      }
+      if (!live_check_result.length) {
+        return res.status(404).json({
+          status: "Failed",
+          error: 'Macth not found'
+        })
+      }
+      let matchData = await match_info(match_id)
+      if (!matchData) {
+        return res.status(404).json({
+          status: "Failed",
+          error: "Details not found"
+        })
+      }
+
+      return res.json(matchData)
+
+    })
+  } catch (err) {
+    return res.status(401).json({ status: "Failed", error: "Invalid or expired token" });
+  }
+})
+app.get('/api/live_match/:match_id', (req, res) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  let { match_id } = req.params
+  try {
+    let decoded_token = validateJWT(token);
+    let live_match_fetch = "SELECT * FROM live_match_data WHERE match_id=?"
+    db.query(live_match_fetch, [match_id], (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          status: "Failed",
+          msg: "Connection error"
+        })
+      }
+      if (!result.length) {
+        return res.status(404).json({
+          status: "Failed",
+          msg: "Match data not found"
+        })
+      }
+      return res.json(result[0])
+    })
+  } catch (err) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
 
   }
 })
-app.get('/api/live_match/overs/', (req, res) => {
-  res.json(match_overs())
-})
+app.get('/api/live_match/contest/:match_id', (req, res) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  let { match_id } = req.params
+  try {
+    let decoded_token = validateJWT(token);
 
-app.get('/api/live_match/info/', (req, res) => {
-  res.json(match_info())
+    let registered_contest_fetch = "SELECT * FROM registered_contest WHERE match_id=? and status='live'";
+
+    db.query(registered_contest_fetch, [match_id], async (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          status: "Failed",
+          msg: "Connection error"
+        })
+      }
+      if (!result.length) {
+        return res.status(404).json({
+          status: "Failed",
+          msg: "Match data not found"
+        })
+      }
+      let contest_list = new Set();
+      result.map(contest => contest_list.add(contest.contest_id))
+      let conetsIds = [...contest_list].join(", ");
+
+
+      let contest_query = `SELECT * FROM contest WHERE match_id=? and contest_id IN (${conetsIds})`;
+      let contest_query_result = await db_promise.execute(contest_query, [match_id])
+
+      return res.json(contest_query_result[0])
+    })
+  } catch (err) {
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+
+  }
 })
+app.get('/admin/live/matches', (req, res) => {
+  let LiveMatchQuery = "SELECT * FROM live_match_data ORDER BY s_no"
+  db.query(LiveMatchQuery, (err, result) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ msg: "Connection Failed" })
+    }
+    res.json(result)
+  })
+})
+app.get('/admin/live/over/:match_id/:innings/:over_number', async (req, res) => {
+  let { match_id, innings, over_number } = req.params
+  let over_data = await getOverData(match_id, innings, over_number)
+  res.json(over_data)
+})
+app.post("/admin/live/over/:match_id/update", async (req,
+  res) => {
+  const { match_id } = req.params;
+  const { innings, over_number, bowler, overs, runs, wickets, team } = req.body;
+
+  if (!innings || !over_number || !bowler || !overs || !wickets || !runs || !team) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+  let over_score;
+  let over_wickets;
+  if (over_number == 1) {
+    over_score = runs;
+    over_wickets = wickets
+  }
+  else {
+    let last_stored_over = `SELECT over_number, bowler, team, runs, score FROM overs WHERE match_id = ? AND innings = ? AND over_number < ? ORDER BY over_number DESC LIMIT 1`;
+    let [last_stored_over_result] = await db_promise.execute(last_stored_over, [match_id, innings, over_number]);
+    let [last_over_runs, last_over_wickets] = (last_stored_over_result[0].score).split("-").map(Number)
+    over_score = parseInt(last_over_runs) + parseInt(runs)
+    over_wickets = parseInt(last_over_wickets) + parseInt(wickets)
+  }
+
+  try {
+    const over_data = await getOverData(match_id, innings, over_number);
+
+    let over_id;
+
+    if (!over_data) {
+      const insertQuery = `
+        INSERT INTO overs (match_id, over_number, bowler, runs, score, wickets, team, innings)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const [result] = await db_promise.execute(insertQuery, [
+        match_id,
+        over_number,
+        bowler,
+        runs,
+        `${over_score}-${over_wickets}`,
+        wickets,
+        team,
+        innings,
+      ]);
+
+      over_id = result.insertId; // Get the ID of the newly inserted over
+      console.log("Over data inserted successfully:", result);
+    } else {
+      // Update existing over data
+      const updateQuery = `
+        UPDATE overs
+        SET bowler = ?, runs = ?, score = ?, wickets = ?, team = ?
+        WHERE match_id = ? AND over_number = ? AND innings = ?
+      `;
+      const [result] = await db_promise.execute(updateQuery, [
+        bowler,
+        runs,
+        `${over_score}-${over_wickets}`,
+        wickets,
+        team,
+        match_id,
+        over_number,
+        innings,
+      ]);
+
+      over_id = over_data.over_id; // Use the existing over ID
+      console.log("Over data updated successfully:");
+    }
+
+    // Insert or update ball-by-ball data (deliveries)
+    if (Array.isArray(overs)) {
+      await db_promise.execute('DELETE FROM deliveries WHERE over_id=?', [over_id])
+
+      for (let index = 0; index < overs.length; index++) {
+        const outcome = overs[index];
+        try {
+
+          await db_promise.execute(
+            `INSERT INTO deliveries (over_id, ball_number, outcome) 
+             VALUES (?, ?, ?) 
+             ON DUPLICATE KEY UPDATE outcome = VALUES(outcome)`,
+            [over_id, index + 1, outcome]
+          );
+        } catch (err) {
+          console.error("Error inserting delivery data:", err);
+        }
+      }
+    } else {
+      console.error("Invalid overs data:", overs);
+    }
+
+    return res.status(200).json({ message: "Over data processed successfully" });
+  } catch (error) {
+    console.error("Error processing over data:", error);
+    return res.status(500).json({ error: "Failed to process over data" });
+  }
+});
+app.post("/admin/close_over/:match_id", (req, res) => {
+  const { match_id } = req.params;
+
+  // Corrected SQL query
+  let update_query = "UPDATE open_overs SET over_number = over_number + 1 WHERE match_id = ?";
+
+  db.query(update_query, [match_id], (err, result) => {
+    if (err) {
+      console.error("Error updating over number:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Match not found" });
+    }
+
+    res.json({ msg: "Over Updated" });
+  });
+})
+app.post('/api/submit/users/over_data/', async (req, res) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  try {
+    let decoded_token = validateJWT(token)
+    let { match_id, over_number, innings } = req.body
+    if (!match_id || !over_number || !innings) {
+      return res.status(400).json({
+        status: "Failed",
+        error: "Invalid Data Sent"
+      })
+    }
+
+    [check_open_over] = await db_promise.execute('SELECT * FROM open_overs WHERE match_id=? and over_number=? and innings=?', [match_id, over_number, innings])
+    if (!check_open_over.length) {
+      return res.status(404).json({
+        "status": "Failed",
+        "error": "Over is Ongoing"
+      })
+    }
+    const { fours, sixes, runs, wickets, dots } = req.body;
+    const validOptions = {
+      fours: ['1 - 2', 'More than 2', 'No Four'],
+      sixes: ['1 - 2', 'More than 2', 'No Sixes'],
+      runs: ['1 - 5', '6 - 10', 'More than 10', 'No Runs'],
+      wickets: ['1', '2', 'More than 2', 'No Wickets'],
+      dots: ['1 Dot', '2 Dots', '3 Dots', 'More than 3'],
+    };
+
+    const isValid = (
+      (fours === null || validOptions.fours.includes(fours)) &&
+      (sixes === null || validOptions.sixes.includes(sixes)) &&
+      (runs === null || validOptions.runs.includes(runs)) &&
+      (wickets === null || validOptions.wickets.includes(wickets)) &&
+      (dots === null || validOptions.dots.includes(dots))
+    );
+
+    if (!isValid) {
+      return res.status(400).json({ error: "Invalid options selected. Please check your inputs." });
+    }
+
+    const query = `
+      INSERT INTO user_over_data (user_id, match_id, innings, over_number, four, six, run, wicket, dot)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE 
+      four = VALUES(four), 
+      six = VALUES(six), 
+      run = VALUES(run), 
+      wicket = VALUES(wicket), 
+      dot = VALUES(dot);
+  `;
+    const values = [decoded_token.userId, match_id, innings, over_number, fours, sixes, runs, wickets, dots];
+
+    db.query(query, values, (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ error: "Connection Error" });
+      }
+      res.json({ success: true, message: "Over data saved successfully", data: result });
+    });
+  }
+  catch (err) {
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+
+  }
+});
+
+
 app.get("*", (req, res) => {
-  res.send("404 page not found")
+  res.status(400).json({ msg: "404 page not found" })
 });
 app.listen(port, () => {
   console.log(`Server listening on port http://localhost:${port}`);
 });
+
+

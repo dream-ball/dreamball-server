@@ -8,7 +8,7 @@ function generateJWT(userID) {
   }
   
 
-  const token = jwt.sign({ userId: userID }, secret_token, { expiresIn: '10m' });
+  const token = jwt.sign({ userId: userID }, secret_token, { expiresIn: '30m' });
   return token;
 }
 

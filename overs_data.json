@@ -1,0 +1,46 @@
+{
+  "7701": {
+    "1": [
+      {
+        "overs": [
+          "1",
+          "W",
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "team": {
+          "over": 2,
+          "cr_rate": "2.50",
+          "bowler": "Ketan Kharat",
+          "runs": 2,
+          "score": "5-1",
+          "wkts": 1,
+          "team": "BEB"
+        }
+      },
+      {
+        "overs": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "WB",
+          "1LB",
+          "WB"
+        ],
+        "team": {
+          "over": 1,
+          "cr_rate": "3.00",
+          "bowler": "Sahil Phegade",
+          "runs": 3,
+          "score": "3-0",
+          "wkts": 0,
+          "team": "BEB"
+        }
+      }
+    ]
+  }
+}
