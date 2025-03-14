@@ -2,7 +2,7 @@ const mysql = require('mysql2');
 const mysql_promise = require('mysql2/promise'); 
 
 const db = mysql.createPool({
-  host: '192.168.207.194',     
+  host: 'localhost',     
   user: 'root',          
   password: '',  
   database: 'match_data',
@@ -17,7 +17,7 @@ db.getConnection((err, connection) => {
   }
 });
 const db_promise = mysql_promise.createPool({
-  host: '192.168.207.194',     
+  host: 'localhost',     
   user: 'root',          
   password: '',  
   database: 'match_data',

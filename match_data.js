@@ -14,7 +14,7 @@ const writeData = (fileName, data) => {
 };
 async function upload_overs() {
     console.time("Execution Time");
-    let overData = await readData('overs_data.json');
+    let overData = await readData('./data/overs_data.json');
 
     for (const matchId in overData) {
         const inningsData = overData[matchId];
@@ -22,7 +22,6 @@ async function upload_overs() {
         let [last_stored_over_result] = await db_promise.execute(last_stored_over, [matchId]);
         let last_innings = 1;
         let last_bowled_over = 1;
-
         if (last_stored_over_result.length > 0) {
             last_innings = last_stored_over_result[0].innings;
             last_bowled_over = last_stored_over_result[0].over_number;
@@ -192,7 +191,7 @@ async function match_info(match_id) {
             error: "Overs not found"
         }
     }
-    let matchInfo = await readData('live_match_data.json').data
+    let matchInfo = await readData('./data/live_match_data.json').data
     let matchData = matchInfo.filter(match => match.match_id == match_id)
     if (!matchData.length) {
         matchData = {
@@ -260,7 +259,7 @@ async function update_live_matches() {
     try {
         const live_result = await fetch(url_for_live, options);
         const result = await live_result.json();
-        writeData("live_match_data.json", result)
+        writeData("./data/live_match_data.json", result)
     } catch (error) {
         console.error(error);
     }
@@ -284,14 +283,14 @@ function update_overs() {
                     overs_data[ids] = over.data;
                 })
             );
-            writeData("overs_data.json", overs_data);
+            writeData("./data/overs_data.json", overs_data);
         };
         await fetchOverData();
     })
     console.timeEnd("Time");
 }
 async function upcoming_matches(matchList) {
-    let data = readData('upcoming_match_data.json').data;
+    let data = readData('./data/upcoming_match_data.json').data;
 
     if (matchList) {
         let m_data = data.filter(match => matchList.includes(match.match_id));
