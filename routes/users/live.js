@@ -3,7 +3,7 @@ const router = express.Router();
 
 
 
-const { validateJWT } = require('../../middleware/jwt_token.js')
+const { validateJWT } = require('../../utils/jwt_users.js')
 const { db, db_promise } = require('../../database/db.js');
 const { match_info } = require('../../match_data.js');
 

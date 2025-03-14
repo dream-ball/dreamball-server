@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const {  generateJWT } = require('../../middleware/jwt_token.js')
+const {  generateJWT } = require('../../utils/jwt_users.js')
 const { db, db_promise } = require('../../database/db.js');
 
 

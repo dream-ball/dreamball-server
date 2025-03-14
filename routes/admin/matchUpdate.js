@@ -3,7 +3,8 @@ const router = express.Router();
 const fs = require("fs");
 const path = require("path");
 
-const validateJWT = require('../../middleware/jwt_token.js');
+// const {validateAdminJWT} = require('../../middleware/auth_admin.js');
+const adminAuth = require('../../middleware/adminAuth');
 const {  db_promise } = require("../../database/db.js");
 const upcomingPath = require('../../utils/filePath.js')
 const {read_default_contest,read_matches} = require('../../utils/readFile.js')
@@ -14,16 +15,18 @@ const { log } = require("console");
 //import upcomingPath from "../utils/filePath";
 
 
-router.get("/admin/upcomingMatches", (req, res) => {
+router.get("/admin/upcomingMatches", adminAuth ,(req, res) => {
 
-  const token = req.header('Authorization');
+  const token = req.header('Authorization')?.replace("Bearer ", "");
 
-  try{
-    console.log('token verificaiton failed')
-    validateJWT(token)
-  }catch(error){
-    return res.status(401).json({'Token' : 'Invalid'});
-  }
+  // try{
+  //   const decoded = validateAdminJWT(token)
+  //   console.log(decoded)
+  // }catch(error){
+  //   console.log(error)
+  //   console.log('token verificaiton failed')
+  //   return res.status(401).json({'Token' : 'Invalid'});
+  // }
 
   try{
     // const isTrue = validateJWT(token)

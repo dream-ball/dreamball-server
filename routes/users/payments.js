@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { validateJWT, generateJWT } = require('../../middleware/jwt_token.js')
+const { validateJWT, generateJWT } = require('../../utils/jwt_users.js')
 const { db, db_promise } = require('../../database/db.js');
 const Razorpay = require('razorpay');
 

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const validateJWT = require('./middleware/jwt_token')
+const validateJWT = require('./utils/jwt_users')
 
 // user endpoints
 const contest = require("./routes/users/contest");

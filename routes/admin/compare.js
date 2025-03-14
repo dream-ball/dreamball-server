@@ -2,19 +2,18 @@ const express = require("express");
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
-const { validateJWT } = require('../../middleware/jwt_token.js')
+// const { validateJWT } = require('../../middleware/jwt_token.js')
 
 const {read_matches,read_matches_new } = require("../../utils/readFile");
 const upcomingPath = require('../../utils/filePath');
 const { log } = require("console");
 
+const adminAuth = require('../../middleware/adminAuth');
 
-router.get("/admin/compare", (req, res) => {
+
+router.get("/admin/compare",adminAuth, (req, res) => {
   
-  const token = req.body;
-
   try{
-    validateJWT(token)
   const newDataPath = path.join(__dirname,'newData.json')
 
   const oldMatch = read_matches(upcomingPath);

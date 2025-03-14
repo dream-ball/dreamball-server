@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const jwt = require("jsonwebtoken");
-const { generateJWT} = require("../../middleware/jwt_token"); // Ensure correct path
+const { generateAdminJWT} = require("../../utils/jwt_admin"); 
 const router = express.Router();
 
 const ADMIN_USER = "admin";
@@ -9,12 +8,12 @@ const ADMIN_PASS = "admin123";
 
 const invalidTokens = new Set();
 
-// Admin Login Route
 router.post("/admin/login", (req, res) => {
     const { username, password } = req.body;
 
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-        const token = generateJWT(username);
+        const token = generateAdminJWT(username);
+        console.log(token)
         return res.json({ status: "ok", token });
     }
 
@@ -22,12 +21,10 @@ router.post("/admin/login", (req, res) => {
 });
 
 
-// Admin Protected Route
 router.get("/admin/protected", (req, res) => {
     res.json({ status: "ok", message: "You have access!" });
 });
 
-// Admin Logout Route
 router.post("/admin/logout", (req, res) => {
     const authHeader = req.headers["authorization"];
 
