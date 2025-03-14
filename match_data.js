@@ -1,6 +1,5 @@
 const fs = require('fs');
-const { db, db_promise } = require('./db');
-
+const {db,db_promise} = require('./database/db.js')
 const readData = (fileName) => {
     if (fs.existsSync(fileName)) {
         const data = fs.readFileSync(fileName);
