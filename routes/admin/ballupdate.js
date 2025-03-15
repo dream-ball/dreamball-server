@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+const {db, db_promise } = require("../../database/db.js");
+
 router.get('/admin/live/matches', (req, res) => {
     let LiveMatchQuery = "SELECT * FROM live_match_data ORDER BY s_no"
     db.query(LiveMatchQuery, (err, result) => {
