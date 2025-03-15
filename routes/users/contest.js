@@ -4,6 +4,7 @@ const router = express.Router();
 const { validateJWT} = require('../../utils/jwt_users.js')
 const { db, db_promise } = require('../../database/db.js');
 const { timeLeft } = require("../../scripts/script.js");
+const {ranking_order} =require('../../match_data.js')
 
 
 router.get('/api/contest/:id', (req, res) => {

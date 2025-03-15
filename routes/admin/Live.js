@@ -1,23 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const { db, db_promise } = require("../../database/db");
-const {read_matches } = require("../../utils/readFile");
-const upcomingPath = require('../../utils/filePath');
-
-
-function extendMinutes(timeStr) {
-  return timeStr.replace(/:(\d{2})/, (match, minute) => {
-      let newMinute = parseInt(minute) + 10;
-      if (newMinute >= 60) {
-          newMinute -= 60; // Wrap around minutes
-      }
-      return `:${String(newMinute).padStart(2, '0')}`;
-  });
-}
-
-
-console.log(extendMinutes("02:40 AM"))
-
 
 router.get("/admin/getLiveMatches", (req, res) => {
 

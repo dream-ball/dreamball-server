@@ -3,10 +3,9 @@ function timeLeft(matchTime,dateWise) {
     try {
         const dateStr = matchTime.split(",")[0];
         const matchDatetimeStr = `${dateWise} ${dateStr}`;
-        // Create Date objects (Note: JavaScript's Date handling can be tricky with formats)
         const matchDate = new Date(matchDatetimeStr);
         const now = new Date();
-        const timeDifference = matchDate.getTime() - now.getTime(); // Difference in milliseconds
+        const timeDifference = matchDate.getTime() - now.getTime();
         if (timeDifference < 0) {
             return "Live";
         }

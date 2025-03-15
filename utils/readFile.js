@@ -1,19 +1,23 @@
 const fs = require("fs");
-
-const read_matches = (filename) => {
-  if (fs.existsSync(filename)) {
-    const data = fs.readFileSync(filename);
-    return JSON.parse(data);
-  }
-  return [];
+const readData = (fileName) => {
+    if (fs.existsSync(fileName)) {
+        const data = fs.readFileSync(fileName);
+        return JSON.parse(data);
+    }
+    else {
+        return `${fileName} not found`
+    }
 };
 
+const writeData = (fileName, data) => {
+  fs.writeFileSync(fileName, JSON.stringify(data, null, 2));
+};
 const read_default_contest = () => {
-  if (fs.existsSync("default_contest_data.json")) {
-    const data = fs.readFileSync("default_contest_data.json");
+  if (fs.existsSync("./data/default_contest_data.json")) {
+    const data = fs.readFileSync("./data/default_contest_data.json");
     return JSON.parse(data);
   }
   return [];
 };
 
-module.exports = { read_matches, read_default_contest };
+module.exports = { readData, writeData, read_default_contest };

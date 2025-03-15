@@ -1,8 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
-
-
 const { validateJWT } = require('../../utils/jwt_users.js')
 const { db, db_promise } = require('../../database/db.js');
 const { match_info } = require('../../match_data.js');
@@ -17,6 +14,14 @@ router.get('/api/live_match/:match_id/info/', async (req, res) => {
       res.status(400).json({ error: "Invalid match ID" });
       return;
     }
+    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", [match_id, decoded_token.userId])
+    if (!check_user_joined.length) {
+      return res.status(404).json({
+        status: "Failed",
+        msg: "Invalid request"
+      })
+    }
+
     let live_check_query = "SELECT * From live_match_data WHERE match_id=?"
     db.query(live_check_query, [match_id], async (live_check_err, live_check_result) => {
       if (live_check_err) {
@@ -46,11 +51,22 @@ router.get('/api/live_match/:match_id/info/', async (req, res) => {
     return res.status(401).json({ status: "Failed", error: "Invalid or expired token" });
   }
 })
-router.get('/api/live_match/:match_id', (req, res) => {
+router.get('/api/live_match/:match_id',async (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   let { match_id } = req.params
   try {
     let decoded_token = validateJWT(token);
+
+    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", [match_id, decoded_token.userId])
+    if (!check_user_joined.length) {
+      return res.status(404).json({
+        status: "Failed",
+        msg: "Invalid request"
+      })
+    }
+
+
+
     let live_match_fetch = "SELECT * FROM live_match_data WHERE match_id=?"
     db.query(live_match_fetch, [match_id], (err, result) => {
       if (err) {
