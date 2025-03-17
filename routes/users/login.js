@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const {  generateJWT } = require('../../utils/jwt_users.js')
-const { db, db_promise } = require('../../database/db.js');
+const { db } = require('../../database/db.js');
 
 
 

@@ -1,23 +1,42 @@
 {
-  "7701": {
+  "7834": {
     "1": [
       {
         "overs": [
           "1",
           "W",
           "0",
-          "0",
-          "0",
+          "4",
+          "4",
           "1"
         ],
         "team": {
-          "over": 2,
-          "cr_rate": "2.50",
-          "bowler": "Ketan Kharat",
-          "runs": 2,
-          "score": "5-1",
+          "over": 13,
+          "cr_rate": "7.58",
+          "bowler": "Musa Majid",
+          "runs": 10,
+          "score": "91-5",
           "wkts": 1,
-          "team": "BEB"
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
+          "W",
+          "0",
+          "4",
+          "4",
+          "1"
+        ],
+        "team": {
+          "over": 12,
+          "cr_rate": "7.58",
+          "bowler": "Musa Majid",
+          "runs": 10,
+          "score": "91-5",
+          "wkts": 1,
+          "team": "RUBY"
         }
       },
       {
@@ -25,20 +44,214 @@
           "0",
           "0",
           "0",
+          "1",
+          "1",
+          "6"
+        ],
+        "team": {
+          "over": 11,
+          "cr_rate": "7.36",
+          "bowler": "Calvin Watuwa",
+          "runs": 8,
+          "score": "81-4",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
           "0",
+          "4",
+          "0",
+          "3BYE",
+          "2BYE",
+          "3",
+          "0",
+          "1"
+        ],
+        "team": {
+          "over": 10,
+          "cr_rate": "7.30",
+          "bowler": "Gurjivan Singh",
+          "runs": 13,
+          "score": "73-4",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
+          "1",
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "team": {
+          "over": 9,
+          "cr_rate": "7.22",
+          "bowler": "Pius Oloka",
+          "runs": 3,
+          "score": "65-4",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "0",
+          "W",
+          "1",
+          "0",
+          "1",
+          "1"
+        ],
+        "team": {
+          "over": 8,
+          "cr_rate": "7.75",
+          "bowler": "Kakaire Geafrey",
+          "runs": 3,
+          "score": "62-4",
+          "wkts": 1,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
+          "1",
+          "0",
+          "4",
+          "1",
+          "4"
+        ],
+        "team": {
+          "over": 7,
+          "cr_rate": "8.43",
+          "bowler": "Gurjivan Singh",
+          "runs": 11,
+          "score": "59-3",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
+          "0",
+          "0",
+          "0",
+          "1",
+          "W"
+        ],
+        "team": {
+          "over": 6,
+          "cr_rate": "8.00",
+          "bowler": "Henry Ssenyondo",
+          "runs": 2,
+          "score": "48-3",
+          "wkts": 1,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
           "0",
           "WB",
+          "0",
+          "4WB",
+          "W",
+          "4",
+          "1LB"
+        ],
+        "team": {
+          "over": 5,
+          "cr_rate": "9.20",
+          "bowler": "Pius Oloka",
+          "runs": 12,
+          "score": "46-2",
+          "wkts": 1,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "4",
+          "1",
+          "0",
+          "6",
+          "1",
+          "6"
+        ],
+        "team": {
+          "over": 4,
+          "cr_rate": "8.50",
+          "bowler": "Musa Majid",
+          "runs": 18,
+          "score": "34-1",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
           "1LB",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "team": {
+          "over": 3,
+          "cr_rate": "5.33",
+          "bowler": "Henry Ssenyondo",
+          "runs": 7,
+          "score": "16-1",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
+          "1",
+          "0",
+          "0",
+          "1",
+          "0",
+          "WB"
+        ],
+        "team": {
+          "over": 2,
+          "cr_rate": "4.00",
+          "bowler": "Kakaire Geafrey",
+          "runs": 4,
+          "score": "8-1",
+          "wkts": 0,
+          "team": "RUBY"
+        }
+      },
+      {
+        "overs": [
+          "1",
+          "1",
+          "0",
+          "W",
+          "1",
+          "0",
           "WB"
         ],
         "team": {
           "over": 1,
-          "cr_rate": "3.00",
-          "bowler": "Sahil Phegade",
-          "runs": 3,
-          "score": "3-0",
-          "wkts": 0,
-          "team": "BEB"
+          "cr_rate": "4.00",
+          "bowler": "Musa Majid",
+          "runs": 4,
+          "score": "4-1",
+          "wkts": 1,
+          "team": "RUBY"
         }
       }
     ]

@@ -1,5 +1,7 @@
 const fs = require('fs');
-const {db,db_promise} = require('./database/db.js')
+const { db, db_promise } = require('./database/db.js');
+
+
 const readData = (fileName) => {
     if (fs.existsSync(fileName)) {
         const data = fs.readFileSync(fileName);
@@ -12,83 +14,154 @@ const readData = (fileName) => {
 const writeData = (fileName, data) => {
     fs.writeFileSync(fileName, JSON.stringify(data, null, 2));
 };
+// async function upload_overs() {
+//     let overData = await readData('./data/overs_data.json');
+//     for (const matchId in overData) {
+//         const inningsData = overData[matchId];
+//         let last_stored_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;";
+//         let [last_stored_over_result] = await db_promise.execute(last_stored_over, [matchId]);
+//         let last_innings = 1;
+//         let last_bowled_over = 1;
+//         if (last_stored_over_result.length > 0) {
+//             last_innings = last_stored_over_result[0].innings;
+//             last_bowled_over = last_stored_over_result[0].over_number;
+//         }
+//         let new_over_data = {};
+//         for (const innings in inningsData) {
+//             let data = [];
+//             inningsData[innings].forEach(async (overData) => {
+//                 let teamInfo = overData.team;
+//                 console.log(teamInfo);
+//                 if ((parseInt(innings) == last_innings && teamInfo.over >= last_bowled_over) || parseInt(innings) > last_innings) {
+//                     data.push(overData);
+//                     try {
+//                         let [result] = await db_promise.execute(
+//                             `INSERT INTO overs (match_id, over_number, bowler, runs, score, wickets, team, innings)
+//                             VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+//                             ON DUPLICATE KEY UPDATE 
+//                             bowler= VALUES(bowler),
+//                             runs = VALUES(runs), 
+//                             score = VALUES(score),     
+//                             wickets = VALUES(wickets)`,
+//                             [
+//                                 matchId,
+//                                 teamInfo.over,
+//                                 teamInfo.bowler,
+//                                 teamInfo.runs,
+//                                 teamInfo.score,
+//                                 teamInfo.wkts,
+//                                 teamInfo.team,
+//                                 innings
+//                             ]
+//                         );
+
+//                         let overId = result.insertId;
+//                         if (!overId) {
+//                             const fetchOverIdQuery = `SELECT id FROM overs WHERE match_id = ? AND over_number = ? AND innings = ?`;
+//                             const [overResult] = await db_promise.execute(fetchOverIdQuery, [matchId, teamInfo.over, innings]);
+
+//                             if (overResult.length > 0) {
+//                                 overId = overResult[0].id;
+//                             } else {
+//                                 console.error("Error: Over ID not found for match", matchId, "over", teamInfo.over);
+//                                 return;
+//                             }
+//                         }
+//                         for (let index = 0; index < overData.overs.length; index++) {
+//                             let outcome = overData.overs[index];
+//                             try {
+//                                 await db_promise.execute(
+//                                     `INSERT INTO deliveries (over_id, ball_number, outcome) 
+//                                     VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE outcome=VALUES(outcome)`,
+//                                     [overId, index + 1, outcome]
+//                                 );
+//                             } catch (err) {
+//                                 console.error("Error inserting delivery data:", err);
+//                             }
+//                         }
+//                     } catch (err) {
+//                         console.error("Error inserting over data:", err);
+//                     }
+//                 }
+//             });
+//             new_over_data[innings] = data;
+//         }
+//     }
+// }
+
 async function upload_overs() {
-    console.time("Execution Time");
     let overData = await readData('./data/overs_data.json');
 
     for (const matchId in overData) {
         const inningsData = overData[matchId];
-        let last_stored_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;";
-        let [last_stored_over_result] = await db_promise.execute(last_stored_over, [matchId]);
+        let last_sotred_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;"
+        let [last_stored_over_result] = await db_promise.execute(last_sotred_over, [matchId])
         let last_innings = 1;
         let last_bowled_over = 1;
+
         if (last_stored_over_result.length > 0) {
             last_innings = last_stored_over_result[0].innings;
             last_bowled_over = last_stored_over_result[0].over_number;
         }
-
-        let new_over_data = {};
+        let new_over_data = {}
         for (const innings in inningsData) {
-            let data = [];
-            inningsData[innings].forEach(async (overData) => {
-                let teamInfo = overData.team;
+            let data = []
+            inningsData[innings].forEach(overData => {
+                let teamInfo = overData.team
                 if ((parseInt(innings) == last_innings && teamInfo.over >= last_bowled_over) || parseInt(innings) > last_innings) {
-                    data.push(overData);
-                    try {
-                        let [result] = await db_promise.execute(
-                            `INSERT INTO overs (match_id, over_number, bowler, runs, score, wickets, team, innings)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
-                            ON DUPLICATE KEY UPDATE 
-                            runs = VALUES(runs), 
-                            score = VALUES(score),     
-                            wickets = VALUES(wickets)`,
-                            [
-                                matchId,
-                                teamInfo.over,
-                                teamInfo.bowler,
-                                teamInfo.runs,
-                                teamInfo.score,
-                                teamInfo.wkts,
-                                teamInfo.team,
-                                innings
-                            ]
-                        );
-
-                        let overId = result.insertId;
-                        if (!overId) {
-                            const fetchOverIdQuery = `SELECT id FROM overs WHERE match_id = ? AND over_number = ? AND innings = ?`;
-                            const [overResult] = await db_promise.execute(fetchOverIdQuery, [matchId, teamInfo.over, innings]);
-
-                            if (overResult.length > 0) {
-                                overId = overResult[0].id;
+                    data.push(overData)
+                    db.query(
+                        `INSERT INTO overs (match_id, over_number, bowler, runs, score, wickets, team,innings)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+                         ON DUPLICATE KEY UPDATE 
+                         runs = VALUES(runs), 
+                         score = VALUES(score),     
+                         wickets = VALUES(wickets)`,
+                        [
+                            matchId,
+                            teamInfo.over,
+                            teamInfo.bowler,
+                            teamInfo.runs,
+                            teamInfo.score,
+                            teamInfo.wkts,
+                            teamInfo.team,
+                            innings
+                        ],
+                        async (err, result) => {
+                            if (err) {
+                                console.error("Error inserting over data:", err);
                             } else {
-                                console.error("Error: Over ID not found for match", matchId, "over", teamInfo.over);
-                                return;
+                                let overId = result.insertId;
+                                if (!overId) {
+                                    const fetchOverIdQuery = `SELECT id FROM overs WHERE match_id = ? AND over_number = ? AND innings = ?`;
+                                    const [overResult] = await db_promise.execute(fetchOverIdQuery, [matchId, teamInfo.over, innings]);
+                                    overId = overResult[0].id
+                                }
+                                overData.overs.forEach((outcome, index) => {
+                                    db.query(
+                                        `INSERT INTO deliveries (over_id, ball_number, outcome) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE outcome=VALUES(outcome)`,
+                                        [overId, index + 1, outcome]
+                                        , (err, result) => {
+                                            if (err) {
+                                                console.log(err);
+                                            } else {
+                                                //a code perform any opration aftert the success updations of over details
+                                            }
+
+                                        });
+                                });
                             }
                         }
-                        for (let index = 0; index < overData.overs.length; index++) {
-                            let outcome = overData.overs[index];
-                            try {
-                                await db_promise.execute(
-                                    `INSERT INTO deliveries (over_id, ball_number, outcome) 
-                                    VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE outcome=VALUES(outcome)`,
-                                    [overId, index + 1, outcome]
-                                );
-                            } catch (err) {
-                                console.error("Error inserting delivery data:", err);
-                            }
-                        }
-                    } catch (err) {
-                        console.error("Error inserting over data:", err);
-                    }
+                    );
                 }
-            });
-            new_over_data[innings] = data;
+            })
+            new_over_data[innings] = data
         }
+        // console.log(JSON.stringify(new_over_data));
+
     }
-    console.timeEnd("Execution Time");
+
 }
-//upload_overs()
 async function getOversData(matchId) {
     try {
 
@@ -99,7 +172,7 @@ async function getOversData(matchId) {
             FROM overs o
             LEFT JOIN deliveries d ON o.id = d.over_id
             WHERE o.match_id = ?
-            ORDER BY o.innings ASC, o.over_number ASC, d.ball_number ASC
+            ORDER BY o.innings DESC, o.over_number DESC, d.ball_number ASC
         `;
 
         let [rows] = await db_promise.execute(getOversQuery, [matchId]);
@@ -112,12 +185,9 @@ async function getOversData(matchId) {
 
         for (const row of rows) {
             const { innings, over_number, over_id, bowler, runs, score, wickets, team, ball_number, outcome } = row;
-
             if (!matchData[innings]) {
                 matchData[innings] = [];
             }
-
-            // Find existing over entry or create a new one
             let lastOver = matchData[innings].find(over => over.over_number === over_number);
             if (!lastOver) {
                 lastOver = {
@@ -131,14 +201,11 @@ async function getOversData(matchId) {
                 };
                 matchData[innings].push(lastOver);
             }
-
-            // Add delivery if it exists
             if (ball_number !== null) {
                 lastOver.overs.push(outcome);
             }
         }
-
-        return matchData;
+        return matchData
     } catch (error) {
         console.error("Error fetching overs data:", error);
         return 0;
@@ -198,58 +265,59 @@ async function match_info(match_id) {
             status: "Failed",
             error: "Match details not found"
         }
-        return 0
     }
-    let [team_a_score] = await db_promise.execute(
-        "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
-        [match_id, matchData[0].team_a_short]
-    );
+    // else {
+    //     let [team_a_score] = await db_promise.execute(
+    //         "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
+    //         [match_id, matchData[0].team_a_short]
+    //     );
 
-    if (team_a_score.length) {
-        matchData[0].team_a_scores = team_a_score[0].score;
+    //     if (team_a_score.length) {
+    //         matchData[0].team_a_scores = team_a_score[0].score;
 
-        let [overs_count] = await db_promise.execute(
-            "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
-            [team_a_score[0].id]
-        );
+    //         let [overs_count] = await db_promise.execute(
+    //             "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
+    //             [team_a_score[0].id]
+    //         );
 
-        matchData[0].team_a_over = `${team_a_score[0].over_number-1}.${overs_count[0]['COUNT(*)']}`;
-    } else {
-        matchData[0].team_a_scores = "0-0";
-        matchData[0].team_a_over = "0.0";
-    }
+    //         matchData[0].team_a_over = `${team_a_score[0].over_number - 1}.${overs_count[0]['COUNT(*)']}`;
+    //     } else {
+    //         matchData[0].team_a_scores = "0-0";
+    //         matchData[0].team_a_over = "0.0";
+    //     }
 
-    let [team_b_score] = await db_promise.execute(
-        "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
-        [match_id, matchData[0].team_b_short]
-    );
+    //     let [team_b_score] = await db_promise.execute(
+    //         "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
+    //         [match_id, matchData[0].team_b_short]
+    //     );
 
-    if (team_b_score.length) {
-        matchData[0].team_b_scores = team_b_score[0].score;
+    //     if (team_b_score.length) {
+    //         matchData[0].team_b_scores = team_b_score[0].score;
 
-        let [overs_count] = await db_promise.execute(
-            "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
-            [team_b_score[0].id]
-        );
+    //         let [overs_count] = await db_promise.execute(
+    //             "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
+    //             [team_b_score[0].id]
+    //         );
 
-        matchData[0].team_b_over = `${team_b_score[0].over_number-1}.${overs_count[0]['COUNT(*)']}`;
-    } else {
-        matchData[0].team_b_scores = "0-0";
-        matchData[0].team_b_over = "0.0";
-    }
-    let [open_over] =await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?",[match_id])
-    if(!open_over.length){
+    //         matchData[0].team_b_over = `${team_b_score[0].over_number - 1}.${overs_count[0]['COUNT(*)']}`;
+    //     } else {
+    //         matchData[0].team_b_scores = "0-0";
+    //         matchData[0].team_b_over = "0.0";
+    //     }
+    // }
+    let [open_over] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id])
+    if (!open_over.length) {
         return 0
     }
     data["oversData"] = [oversData]
     data["matchInfo"] = matchData
-    data["openOver"]= open_over
+    data["openOver"] = open_over
     return data
 }
 const options = {
     method: 'GET',
     headers: {
-        'x-rapidapi-key': '8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a',//vignesh :8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a //ama : d8a433c819msh5f6984e6e8d52d2p10084fjsn90afec517a0a //thaya:5beed19ad2mshfedc45ca698b32ep1e1644jsnf4cb628a6065  453326: 7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f
+        'x-rapidapi-key': '7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f',//vignesh :8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a //ama : d8a433c819msh5f6984e6e8d52d2p10084fjsn90afec517a0a //thaya:5beed19ad2mshfedc45ca698b32ep1e1644jsnf4cb628a6065  453326: 7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f
         'x-rapidapi-host': 'cricket-live-line1.p.rapidapi.com'
     }
 };
@@ -264,7 +332,6 @@ async function update_live_matches() {
         console.error(error);
     }
 }
-// update_live_matches()
 function update_overs() {
     let live_match_query = "SELECT match_id FROM live_match_data"
     db.query(live_match_query, async (err, result) => {
@@ -283,12 +350,116 @@ function update_overs() {
                     overs_data[ids] = over.data;
                 })
             );
-            writeData("./data/overs_data.json", overs_data);
+            await writeData("./data/overs_data.json", overs_data);
+
+            await upload_overs();
+
         };
         await fetchOverData();
     })
-    console.timeEnd("Time");
+
 }
+
+async function update_leaderBoard(match_id) {
+    let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
+    let overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
+    if(!overs_data){
+        console.log("Over details not found");
+        return;
+    }
+    let wickets = overs_data.wickets;
+    let runs = overs_data.runs;
+    let sixes = overs_data.overs.filter(ball => ball === "6").length;
+    let four = overs_data.overs.filter(ball => ball === "4").length;
+    let dots = overs_data.overs.filter(ball => ball === "0").length;
+
+    let [user_inputs] = await db_promise.execute(
+        "SELECT * FROM user_over_data WHERE match_id=? and over_number=?",
+        [match_id, (overs_to[0].over_number) - 1]
+    );
+
+    user_inputs.forEach(async (user_data) => {
+        let points_gained = 0; 
+     
+        if (user_data.run != null) {
+            if (user_data.run === "1 - 5") {
+                runs >= 1 && runs <= 5 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.run === "6 - 10") {
+                runs >= 6 && runs <= 10 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.run === "More than 10") {
+                runs > 10 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.run === "No Runs") {
+                runs === 0 ? points_gained += 1 : points_gained -= 1;
+            }
+            // console.log(points_gained);
+        }
+
+        // Fours Calculation
+        if (user_data.four != null) {
+            if (user_data.four === "1 - 2") {
+                four >= 1 && four <= 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.four === "More than 2") {
+                four > 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.four === "No Four") {  
+                four === 0 ? points_gained += 1 : points_gained -= 1;
+            }
+            // console.log(points_gained);
+
+        }
+        if (user_data.six != null) {
+            if (user_data.six === "1 - 2") {
+                sixes >= 1 && sixes <= 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.six === "More than 2") {
+                sixes > 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.six === "No Sixes") {
+                sixes === 0 ? points_gained += 1 : points_gained -= 1;
+            }
+            // console.log(points_gained);
+
+        }
+        if (user_data.wicket != null) {
+            if (user_data.wicket === "1") {
+                wickets === 1 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.wicket === "2") {
+                wickets === 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.wicket === "More than 2") {
+                wickets > 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.wicket === "No Wickets") {
+                wickets === 0 ? points_gained += 1 : points_gained -= 1;
+            }
+            // console.log(points_gained);
+
+        }
+        if (user_data.dot != null) {
+            if (user_data.dot === "1 Dot") {
+                dots === 1 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.dot === "2 Dots") {
+                dots === 2 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.dot === "3 Dots") {
+                dots === 3 ? points_gained += 1 : points_gained -= 1;
+            } else if (user_data.dot === "More than 3") {
+                dots > 3 ? points_gained += 1 : points_gained -= 1;
+            }
+
+            // console.log(points_gained);
+
+        }   
+
+
+        // console.log("wickets: "+wickets, "\nruns: "+runs,"\nfour :"+four,"\ndots :"+dots,"\nsixes :"+sixes);
+        // console.log(user_data);
+        // console.log("user_id: " + user_data.user_id);
+        // console.log("points_gained: " + points_gained);
+
+
+
+        const [update_points] =await  db_promise.execute("UPDATE registered_contest SET points=points + ? WHERE match_id=? AND user_id=?",[points_gained,user_data.match_id,user_data.user_id])
+
+    });
+}
+
+
+// update_leaderBoard(7834)
 async function upcoming_matches(matchList) {
     let data = readData('./data/upcoming_match_data.json').data;
 
@@ -398,4 +569,4 @@ function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformF
     return (groupAndDisplayPrizes(result.prizeDistribution));
 }
 
-module.exports = { match_info, upcoming_matches, ranking_order, getOverData };
+module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard };
