@@ -221,7 +221,7 @@ router.post('/api/register/contest/:contest_id', async (req, res) => {
       let current_fill;
   
   
-      if (registeredPlayers < result.minimum_players) {
+      if (registeredPlayers < 0) { //result.minimum_players
         current_fill = {
           data: "Winners will be added soon...!"
         }

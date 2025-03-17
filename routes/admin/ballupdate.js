@@ -167,4 +167,21 @@ router.post("/admin/close_over/:match_id", (req, res) => {
   });
 })
 
+
+router.post("/admin/switch_innings/:match_id", (req, res) => {
+  const { match_id } = req.params;
+  let update_query = "UPDATE open_overs SET over_number = 1 , innings = innings + 1 WHERE match_id = ?";
+  db.query(update_query, [match_id], (err, result) => {
+    if (err) {
+      console.error("Error updating innings number:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Match not found" });
+    }
+    // update_leaderBoard(match_id)
+    res.json({ msg: "Innings changed" });
+  });
+})
+
 module.exports = router;

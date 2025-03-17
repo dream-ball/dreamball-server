@@ -362,8 +362,21 @@ function update_overs() {
 
 async function update_leaderBoard(match_id) {
     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
-    let overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
-    if(!overs_data){
+    if (!overs_to.length) {
+        console.log("No overs found for the match.");
+        return;
+    }
+    let overs_data;
+    if (overs_to[0].innings == 2 && overs_to[0].over_number == 1) {
+        const [last_ball] = await db_promise.execute("SELECT MAX(over_number) FROM `overs` WHERE match_id = ? and innings =1", [match_id])
+        overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
+    }
+    else {
+        overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
+
+    }
+
+    if (!overs_data) {
         console.log("Over details not found");
         return;
     }
@@ -374,13 +387,13 @@ async function update_leaderBoard(match_id) {
     let dots = overs_data.overs.filter(ball => ball === "0").length;
 
     let [user_inputs] = await db_promise.execute(
-        "SELECT * FROM user_over_data WHERE match_id=? and over_number=?",
+        "SELECT * FROM user_over_data WHERE match_id=? AND over_number=?",
         [match_id, (overs_to[0].over_number) - 1]
     );
 
     user_inputs.forEach(async (user_data) => {
-        let points_gained = 0; 
-     
+        let points_gained = 0;
+
         if (user_data.run != null) {
             if (user_data.run === "1 - 5") {
                 runs >= 1 && runs <= 5 ? points_gained += 1 : points_gained -= 1;
@@ -400,7 +413,7 @@ async function update_leaderBoard(match_id) {
                 four >= 1 && four <= 2 ? points_gained += 1 : points_gained -= 1;
             } else if (user_data.four === "More than 2") {
                 four > 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.four === "No Four") {  
+            } else if (user_data.four === "No Four") {
                 four === 0 ? points_gained += 1 : points_gained -= 1;
             }
             // console.log(points_gained);
@@ -443,7 +456,7 @@ async function update_leaderBoard(match_id) {
 
             // console.log(points_gained);
 
-        }   
+        }
 
 
         // console.log("wickets: "+wickets, "\nruns: "+runs,"\nfour :"+four,"\ndots :"+dots,"\nsixes :"+sixes);
@@ -453,13 +466,13 @@ async function update_leaderBoard(match_id) {
 
 
 
-        const [update_points] =await  db_promise.execute("UPDATE registered_contest SET points=points + ? WHERE match_id=? AND user_id=?",[points_gained,user_data.match_id,user_data.user_id])
+        const [update_points] = await db_promise.execute("UPDATE registered_contest SET points=points + ? WHERE match_id=? AND user_id=?", [points_gained, user_data.match_id, user_data.user_id])
 
     });
 }
 
 
-// update_leaderBoard(7834)
+update_leaderBoard(7834)
 async function upcoming_matches(matchList) {
     let data = readData('./data/upcoming_match_data.json').data;
 
