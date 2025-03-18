@@ -283,7 +283,7 @@ router.get('/api/rankings/:match_id/:contest_id', async (req, res) => {
     if (result.type == "practice") {
       return res.json({ data: "Practice contest", leaderBorad: data })
     }
-    res.json({ max_fill: max_fill.prizes_order, current_fill: current_fill.prizes_order, current_prizePool: current_fill.prize_pool, leaderBorad: data })
+    res.json({ max_fill: max_fill.prizes_order, current_fill: current_fill.prizes_order, current_prizePool: current_fill.prize_pool, leaderBoard: data })
 
   } catch (error) {
     console.log(error);

@@ -360,116 +360,211 @@ function update_overs() {
 
 }
 
+// async function update_leaderBoard(match_id) {
+//     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
+//     if (!overs_to.length) {
+//         console.log("No overs found for the match.");
+//         return;
+//     }
+//     let overs_data;
+//     if (overs_to[0].innings == 2 && overs_to[0].over_number == 1) {
+//         const [last_ball] = await db_promise.execute("SELECT MAX(over_number) FROM `overs` WHERE match_id = ? and innings =1", [match_id])
+//         overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
+//     }
+//     else {
+//         overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
+
+//     }
+
+//     if (!overs_data) {
+//         console.log("Over details not found");
+//         return;
+//     }
+//     let wickets = overs_data.wickets;
+//     let runs = overs_data.runs;
+//     let sixes = overs_data.overs.filter(ball => ball === "6").length;
+//     let four = overs_data.overs.filter(ball => ball === "4").length;
+//     let dots = overs_data.overs.filter(ball => ball === "0").length;
+
+//     let [user_inputs] = await db_promise.execute(
+//         "SELECT * FROM user_over_data WHERE match_id=? AND over_number=?",
+//         [match_id, (overs_to[0].over_number) - 1]
+//     );
+
+//     user_inputs.forEach(async (user_data) => {
+//         let points_gained = 0;
+
+//         if (user_data.run != null) {
+//             if (user_data.run === "1 - 5") {
+//                 runs >= 1 && runs <= 5 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.run === "6 - 10") {
+//                 runs >= 6 && runs <= 10 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.run === "More than 10") {
+//                 runs > 10 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.run === "No Runs") {
+//                 runs === 0 ? points_gained += 1 : points_gained -= 1;
+//             }
+//             // console.log(points_gained);
+//         }
+
+//         // Fours Calculation
+//         if (user_data.four != null) {
+//             if (user_data.four === "1 - 2") {
+//                 four >= 1 && four <= 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.four === "More than 2") {
+//                 four > 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.four === "No Four") {
+//                 four === 0 ? points_gained += 1 : points_gained -= 1;
+//             }
+//             // console.log(points_gained);
+
+//         }
+//         if (user_data.six != null) {
+//             if (user_data.six === "1 - 2") {
+//                 sixes >= 1 && sixes <= 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.six === "More than 2") {
+//                 sixes > 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.six === "No Sixes") {
+//                 sixes === 0 ? points_gained += 1 : points_gained -= 1;
+//             }
+//             // console.log(points_gained);
+
+//         }
+//         if (user_data.wicket != null) {
+//             if (user_data.wicket === "1") {
+//                 wickets === 1 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.wicket === "2") {
+//                 wickets === 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.wicket === "More than 2") {
+//                 wickets > 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.wicket === "No Wickets") {
+//                 wickets === 0 ? points_gained += 1 : points_gained -= 1;
+//             }
+//             // console.log(points_gained);
+
+//         }
+//         if (user_data.dot != null) {
+//             if (user_data.dot === "1 Dot") {
+//                 dots === 1 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.dot === "2 Dots") {
+//                 dots === 2 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.dot === "3 Dots") {
+//                 dots === 3 ? points_gained += 1 : points_gained -= 1;
+//             } else if (user_data.dot === "More than 3") {
+//                 dots > 3 ? points_gained += 1 : points_gained -= 1;
+//             }
+
+//             // console.log(points_gained);
+
+//         }
+
+
+//         // console.log("wickets: "+wickets, "\nruns: "+runs,"\nfour :"+four,"\ndots :"+dots,"\nsixes :"+sixes);
+//         // console.log(user_data);
+//         // console.log("user_id: " + user_data.user_id);
+//         // console.log("points_gained: " + points_gained);
+
+
+
+//         const [update_points] = await db_promise.execute("UPDATE registered_contest SET points=points + ? WHERE match_id=? AND user_id=?", [points_gained, user_data.match_id, user_data.user_id])
+
+//     });
+// }
+
 async function update_leaderBoard(match_id) {
     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
     if (!overs_to.length) {
         console.log("No overs found for the match.");
         return;
     }
+
     let overs_data;
     if (overs_to[0].innings == 2 && overs_to[0].over_number == 1) {
-        const [last_ball] = await db_promise.execute("SELECT MAX(over_number) FROM `overs` WHERE match_id = ? and innings =1", [match_id])
-        overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
-    }
-    else {
-        overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
-
+        const [last_ball] = await db_promise.execute("SELECT MAX(over_number) AS max_over FROM `overs` WHERE match_id = ? AND innings = 1", [match_id]);
+        overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0].max_over);
+    } else {
+        overs_data = await getOverData(match_id, overs_to[0].innings, overs_to[0].over_number - 1);
     }
 
     if (!overs_data) {
         console.log("Over details not found");
         return;
     }
-    let wickets = overs_data.wickets;
-    let runs = overs_data.runs;
-    let sixes = overs_data.overs.filter(ball => ball === "6").length;
-    let four = overs_data.overs.filter(ball => ball === "4").length;
-    let dots = overs_data.overs.filter(ball => ball === "0").length;
+
+    let { wickets, runs, overs } = overs_data;
+    let sixes = overs.filter(ball => ball === "6").length;
+    let four = overs.filter(ball => ball === "4").length;
+    let dots = overs.filter(ball => ball === "0").length;
 
     let [user_inputs] = await db_promise.execute(
         "SELECT * FROM user_over_data WHERE match_id=? AND over_number=?",
-        [match_id, (overs_to[0].over_number) - 1]
+        [match_id, overs_to[0].over_number - 1]
     );
 
-    user_inputs.forEach(async (user_data) => {
+    for (const user_data of user_inputs) {
         let points_gained = 0;
 
-        if (user_data.run != null) {
-            if (user_data.run === "1 - 5") {
-                runs >= 1 && runs <= 5 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.run === "6 - 10") {
-                runs >= 6 && runs <= 10 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.run === "More than 10") {
-                runs > 10 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.run === "No Runs") {
-                runs === 0 ? points_gained += 1 : points_gained -= 1;
-            }
-            // console.log(points_gained);
+        // Runs Calculation
+        if (user_data.run) {
+            const run_conditions = {
+                "1 - 5": runs >= 1 && runs <= 5,
+                "6 - 10": runs >= 6 && runs <= 10,
+                "More than 10": runs > 10,
+                "No Runs": runs === 0
+            };
+            points_gained += run_conditions[user_data.run] ? 1 : -1;
         }
 
         // Fours Calculation
-        if (user_data.four != null) {
-            if (user_data.four === "1 - 2") {
-                four >= 1 && four <= 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.four === "More than 2") {
-                four > 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.four === "No Four") {
-                four === 0 ? points_gained += 1 : points_gained -= 1;
-            }
-            // console.log(points_gained);
-
-        }
-        if (user_data.six != null) {
-            if (user_data.six === "1 - 2") {
-                sixes >= 1 && sixes <= 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.six === "More than 2") {
-                sixes > 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.six === "No Sixes") {
-                sixes === 0 ? points_gained += 1 : points_gained -= 1;
-            }
-            // console.log(points_gained);
-
-        }
-        if (user_data.wicket != null) {
-            if (user_data.wicket === "1") {
-                wickets === 1 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.wicket === "2") {
-                wickets === 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.wicket === "More than 2") {
-                wickets > 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.wicket === "No Wickets") {
-                wickets === 0 ? points_gained += 1 : points_gained -= 1;
-            }
-            // console.log(points_gained);
-
-        }
-        if (user_data.dot != null) {
-            if (user_data.dot === "1 Dot") {
-                dots === 1 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.dot === "2 Dots") {
-                dots === 2 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.dot === "3 Dots") {
-                dots === 3 ? points_gained += 1 : points_gained -= 1;
-            } else if (user_data.dot === "More than 3") {
-                dots > 3 ? points_gained += 1 : points_gained -= 1;
-            }
-
-            // console.log(points_gained);
-
+        if (user_data.four) {
+            const four_conditions = {
+                "1 - 2": four >= 1 && four <= 2,
+                "More than 2": four > 2,
+                "No Four": four === 0
+            };
+            points_gained += four_conditions[user_data.four] ? 1 : -1;
         }
 
+        // Sixes Calculation
+        if (user_data.six) {
+            const six_conditions = {
+                "1 - 2": sixes >= 1 && sixes <= 2,
+                "More than 2": sixes > 2,
+                "No Sixes": sixes === 0
+            };
+            points_gained += six_conditions[user_data.six] ? 1 : -1;
+        }
 
-        // console.log("wickets: "+wickets, "\nruns: "+runs,"\nfour :"+four,"\ndots :"+dots,"\nsixes :"+sixes);
-        // console.log(user_data);
-        // console.log("user_id: " + user_data.user_id);
-        // console.log("points_gained: " + points_gained);
+        // Wickets Calculation
+        if (user_data.wicket) {
+            const wicket_conditions = {
+                "1": wickets === 1,
+                "2": wickets === 2,
+                "More than 2": wickets > 2,
+                "No Wickets": wickets === 0
+            };
+            points_gained += wicket_conditions[user_data.wicket] ? 1 : -1;
+        }
 
+        // Dots Calculation
+        if (user_data.dot) {
+            const dot_conditions = {
+                "1 Dot": dots === 1,
+                "2 Dots": dots === 2,
+                "3 Dots": dots === 3,
+                "More than 3": dots > 3
+            };
+            points_gained += dot_conditions[user_data.dot] ? 1 : -1;
+        }
 
-
-        const [update_points] = await db_promise.execute("UPDATE registered_contest SET points=points + ? WHERE match_id=? AND user_id=?", [points_gained, user_data.match_id, user_data.user_id])
-
-    });
+        // Update Points in Database
+        await db_promise.execute(
+            "UPDATE registered_contest SET points = points + ? WHERE match_id=? AND user_id=?",
+            [points_gained, user_data.match_id, user_data.user_id]
+        );
+    }
 }
+
 async function prizeOrder(match_query_result) {
     let query_result = match_query_result
     result = query_result
@@ -542,6 +637,8 @@ async function leaderBoard(match_id, contest_id, user_id) {
     let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
     let [match_query_result] = await db_promise.execute(match_query, [match_id, contest_id]);
 
+    let players_count = ((match_query_result[0].total_spots) - (match_query_result[0].spots_available));
+
     if (!match_query_result.length) {
         return { error: "Match not found" };
     }
@@ -591,22 +688,20 @@ async function leaderBoard(match_id, contest_id, user_id) {
                 }
             }
 
-            return { leaderBoard_data, user_position: user_query };
+            return { leaderBoard_data, user_position: user_query, players_count };
         }
     } else {
         const [players] = await db_promise.execute(`
             SELECT rc.user_id, ud.user_name ,ud.user_profile
             FROM registered_contest rc
             JOIN user_details ud ON rc.user_id = ud.user_id 
-            WHERE match_id=? AND contest_id=?`,
+            WHERE match_id=? AND contest_id=? LIMIT 100`,
             [match_id, contest_id]
         );
 
-        return (players);
+        return ({ players, players_count });
     }
 }
-
-
 async function upcoming_matches(matchList) {
     let data = readData('./data/upcoming_match_data.json').data;
 
