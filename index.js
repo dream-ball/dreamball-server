@@ -2,8 +2,7 @@ const express = require("express");
 const router = express.Router();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const validateJWT = require('./utils/jwt_users')
-
+const https = require("https");
 // user endpoints
 const contest = require("./routes/users/contest");
 const live = require("./routes/users/live");
@@ -29,6 +28,10 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; connect-src 'self' https://13.127.231.62;"
+  );
   next();
 });
 
