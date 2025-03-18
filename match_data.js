@@ -470,9 +470,143 @@ async function update_leaderBoard(match_id) {
 
     });
 }
+async function prizeOrder(match_query_result) {
+    let query_result = match_query_result
+    result = query_result
+    let max_prize = JSON.parse(result.prize_order)
+    let prize_order = []
+    for (const [stage, value] of Object.entries(max_prize)) {
+        const [rankPart, prize] = value.split(':');
+        let order_temp = []
+        if (rankPart.includes('-')) {
+            const [startRank, endRank] = rankPart.split('-').map(Number);
+            order_temp.push(startRank, endRank, Number(prize))
+            prize_order.push(order_temp)
+        } else {
+            // Handle single rank
+            const rank = parseInt(rankPart, 10);
+            order_temp.push(rank, rank, Number(prize))
+            prize_order.push(order_temp)
+        }
+    }
+
+    let registeredPlayers = result.total_spots - result.spots_available;
+    let totalEntry = result.total_spots;
+    let entryFee = result.entry_fee
+    let platformFeeFilled = result.platform_filler_fee
+    let platformFeePercentNotFilled = result.platform_fee
+    const cnFilled = registeredPlayers === totalEntry;
+    let current_fill;
 
 
-update_leaderBoard(7834)
+    if (registeredPlayers < result.minimum_players) {
+        current_fill = {
+            data: "Winners will be added soon...!"
+        }
+    }
+    else {
+        current_fill = ranking_order(registeredPlayers,
+            entryFee,
+            platformFeeFilled,
+            platformFeePercentNotFilled,
+            prize_order,
+            cnFilled)
+    }
+
+    if (result.type == "practice") {
+        return ({ data: "Practice contest" })
+    }
+    return (current_fill)
+
+}
+
+function getPrize(position, prizes_order) {
+    if (prizes_order != "Winners will be added soon...!") {
+        for (const prize of prizes_order) {
+            if (prize.rank.includes(`${position}`)) {
+                return prize.winnings;
+            }
+
+            const match = prize.rank.match(/# (\d+) - (\d+)/);
+            if (match) {
+                const [_, start, end] = match.map(Number);
+                if (position >= start && position <= end) {
+                    return prize.winnings;
+                }
+            }
+        }
+    }
+    return '0'; // No winnings if the rank is not found
+}
+async function leaderBoard(match_id, contest_id, user_id) {
+    let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
+    let [match_query_result] = await db_promise.execute(match_query, [match_id, contest_id]);
+
+    if (!match_query_result.length) {
+        return { error: "Match not found" };
+    }
+
+    if (match_query_result[0].status === "live") {
+        let [user_query] = await db_promise.execute(
+            `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
+            FROM (
+                SELECT user_id, points, 
+                RANK() OVER(ORDER BY points DESC) AS position
+                FROM registered_contest
+                WHERE match_id = ?
+            ) AS ranked_data
+            JOIN user_details ud ON ranked_data.user_id = ud.user_id
+            WHERE ranked_data.user_id = ?;`,
+            [match_id, user_id]
+        );
+
+        if (!user_query.length) {
+            return { error: "User not found in contest" };
+        }
+
+        let prizeData = await prizeOrder(match_query_result[0]);
+
+        if (prizeData.data !== "Winners will be added soon...!") {
+            let user_prize = getPrize(user_query[0].position, prizeData.prizes_order);
+            user_query[0]["winnings"] = user_prize;
+
+            const [players] = await db_promise.execute(`
+                SELECT rc.user_id, ud.user_name ,ud.user_profile
+                FROM registered_contest rc
+                JOIN user_details ud ON rc.user_id = ud.user_id 
+                WHERE match_id=? AND contest_id=?`,
+                [match_id, contest_id]
+            );
+
+            let leaderBoard_data = [];
+            for (let i = 0; i < prizeData["prizes_order"].length; i++) {
+                if (i < players.length) {
+                    let data = {
+                        "rank": prizeData["prizes_order"][i].rank,
+                        "player_name": players[i].user_name,
+                        "player_profile": players[i].user_profile,
+                        "winnings": prizeData["prizes_order"][i].winnings
+                    };
+                    leaderBoard_data.push(data);
+                }
+            }
+
+            return { leaderBoard_data, user_position: user_query };
+        }
+    } else {
+        const [players] = await db_promise.execute(`
+            SELECT rc.user_id, ud.user_name ,ud.user_profile
+            FROM registered_contest rc
+            JOIN user_details ud ON rc.user_id = ud.user_id 
+            WHERE match_id=? AND contest_id=?`,
+            [match_id, contest_id]
+        );
+
+        return (players);
+    }
+}
+
+
 async function upcoming_matches(matchList) {
     let data = readData('./data/upcoming_match_data.json').data;
 
@@ -498,7 +632,6 @@ function groupAndDisplayPrizes(prizeDistribution) {
      * @param {Object} prizeDistribution - An object containing the prize distribution for each rank.
      */
     const groupedPrizes = new Map();
-
     // Group ranks by prize using Map
     for (const [rankStr, prize] of Object.entries(prizeDistribution)) {
         const rank = parseInt(rankStr);
@@ -579,7 +712,8 @@ function distributePrizes(registeredPlayers, entryFee, platformFeeFilled, platfo
 }
 function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformFeePercentNotFilled, prize_table, cnFilled) {
     const result = distributePrizes(registeredPlayers, entryFee, platformFeeFilled, platformFeePercentNotFilled, prize_table, cnFilled);
-    return (groupAndDisplayPrizes(result.prizeDistribution));
+
+    return ({ "prizes_order": groupAndDisplayPrizes(result.prizeDistribution), "prize_pool": result.prizePool });
 }
 
-module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard };
+module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard };

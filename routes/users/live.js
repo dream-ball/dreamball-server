@@ -224,4 +224,37 @@ router.post('/api/user/selected_options/', async (req, res) => {
   }
 })
 
+
+router.get('/api/live/user/history/:match_id', async (req,res)=>{
+  const {match_id} =req.params
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  try {
+    const decoded_token = validateJWT(token)
+    if (!match_id) {
+      return res.status(404).json({
+        status: "Failed",
+        msg: "Invalid Match ID"
+      })
+    }
+
+  const [user_inputs_1] =await db_promise.execute("SELECT * FROM user_over_data WHERE match_id= ? AND user_id=? AND innings =1",[match_id,decoded_token.userId])
+  const [user_inputs_2] =await db_promise.execute("SELECT * FROM user_over_data WHERE match_id= ? AND user_id=? AND innings =2",[match_id,decoded_token.userId])
+  let user_inputs={}
+  if(!user_inputs_1.length){
+    user_inputs["1"]=[]
+  }
+  else{
+    user_inputs["1"]=user_inputs_1
+  }
+  if(!user_inputs_2.length){
+    user_inputs["2"]=[]
+  }
+  else{
+    user_inputs["2"]=user_inputs_2
+  }
+  res.json([user_inputs])
+  } catch (error) {
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+  }
+})
 module.exports = router;

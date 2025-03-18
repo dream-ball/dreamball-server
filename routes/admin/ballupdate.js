@@ -166,8 +166,6 @@ router.post("/admin/close_over/:match_id", (req, res) => {
     res.json({ msg: "Over Updated" });
   });
 })
-
-
 router.post("/admin/switch_innings/:match_id", (req, res) => {
   const { match_id } = req.params;
   let update_query = "UPDATE open_overs SET over_number = 1 , innings = innings + 1 WHERE match_id = ?";
