@@ -631,7 +631,7 @@ function getPrize(position, prizes_order) {
             }
         }
     }
-    return '0'; // No winnings if the rank is not found
+    return '0'; 
 }
 async function leaderBoard(match_id, contest_id, user_id) {
     let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
@@ -643,6 +643,8 @@ async function leaderBoard(match_id, contest_id, user_id) {
         return { error: "Match not found" };
     }
 
+
+
     if (match_query_result[0].status === "live") {
         let [user_query] = await db_promise.execute(
             `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
@@ -652,8 +654,19 @@ async function leaderBoard(match_id, contest_id, user_id) {
                 FROM registered_contest
                 WHERE match_id = ?
             ) AS ranked_data
-            JOIN user_details ud ON ranked_data.user_id = ud.user_id
-            WHERE ranked_data.user_id = ?;`,
+            JOIN user_details ud ON ranked_data.user_id = ud.user_id;`,
+            [match_id]
+        );
+
+        let [user_position] = await db_promise.execute(
+            `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
+            FROM (
+                SELECT user_id, points, 
+                RANK() OVER(ORDER BY points DESC) AS position
+                FROM registered_contest
+                WHERE match_id = ?
+            ) AS ranked_data
+            JOIN user_details ud ON ranked_data.user_id = ud.user_id WHERE ranked_data.user_id = ?;`,
             [match_id, user_id]
         );
 
@@ -663,32 +676,23 @@ async function leaderBoard(match_id, contest_id, user_id) {
 
         let prizeData = await prizeOrder(match_query_result[0]);
 
+        let user_prize = await getPrize(user_position[0].position,prizeData.prizes_order)
+        user_position[0].winnings =user_prize
+        
         if (prizeData.data !== "Winners will be added soon...!") {
-            let user_prize = getPrize(user_query[0].position, prizeData.prizes_order);
-            user_query[0]["winnings"] = user_prize;
-
-            const [players] = await db_promise.execute(`
-                SELECT rc.user_id, ud.user_name ,ud.user_profile
-                FROM registered_contest rc
-                JOIN user_details ud ON rc.user_id = ud.user_id 
-                WHERE match_id=? AND contest_id=?`,
-                [match_id, contest_id]
-            );
-
             let leaderBoard_data = [];
-            for (let i = 0; i < prizeData["prizes_order"].length; i++) {
-                if (i < players.length) {
-                    let data = {
-                        "rank": prizeData["prizes_order"][i].rank,
-                        "player_name": players[i].user_name,
-                        "player_profile": players[i].user_profile,
-                        "winnings": prizeData["prizes_order"][i].winnings
-                    };
-                    leaderBoard_data.push(data);
-                }
-            }
-
-            return { leaderBoard_data, user_position: user_query, players_count };
+            user_query.map(users => {
+                let user_prize = getPrize(users.position, prizeData.prizes_order);
+                let data = {
+                    "rank": users.position,
+                    "user_name": users.user_name,
+                    "user_profile": users.user_profile,
+                    "points": users.points,
+                    "winnings": user_prize
+                };
+                leaderBoard_data.push(data);
+            })
+            return { leaderBoard_data, user_position: user_position, players_count };
         }
     } else {
         const [players] = await db_promise.execute(`
@@ -807,7 +811,6 @@ function distributePrizes(registeredPlayers, entryFee, platformFeeFilled, platfo
 }
 function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformFeePercentNotFilled, prize_table, cnFilled) {
     const result = distributePrizes(registeredPlayers, entryFee, platformFeeFilled, platformFeePercentNotFilled, prize_table, cnFilled);
-
     return ({ "prizes_order": groupAndDisplayPrizes(result.prizeDistribution), "prize_pool": result.prizePool });
 }
 

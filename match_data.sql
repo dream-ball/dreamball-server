@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 18, 2025 at 07:15 AM
+-- Generation Time: Mar 18, 2025 at 07:41 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -315,7 +315,7 @@ CREATE TABLE `user_details` (
   `mail_id` varchar(255) NOT NULL,
   `user_name` varchar(15) DEFAULT NULL,
   `user_token` varchar(255) NOT NULL,
-  `user_profile` longtext NOT NULL DEFAULT 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTtYlMT_y-EHdA3AHXBo3PNPDApVNmmbAKSQ&s',
+  `user_profile` varchar(255) NOT NULL DEFAULT '''https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTtYlMT_y-EHdA3AHXBo3PNPDApVNmmbAKSQ&s''',
   `funds` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
