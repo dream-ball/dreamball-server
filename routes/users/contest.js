@@ -216,82 +216,65 @@ router.get('/api/user/contest/:match_id', (req, res) => {
   }
 })
 router.get('/api/rankings/:match_id/:contest_id', async (req, res) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-
   try {
-    const decoded_token = validateJWT(token)
-
-    let { match_id, contest_id } = req.params;
-    let match_query = "SELECT * FROM contest WHERE match_id=? and contest_id=?"
-    let match_query_result = await db_promise.execute(match_query, [match_id, contest_id])
-    let query_result = match_query_result[0]
-    if (!query_result.length) {
-      return res.status(400).json({
-        status: "Failed",
-        msg: "No match data found"
-      })
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ status: "Failed", msg: "Authorization token required" });
     }
-    result = query_result[0]
-    let max_prize = JSON.parse(result.prize_order)
-    let prize_order = []
+
+    const decoded_token = validateJWT(token);
+    const { match_id, contest_id } = req.params;
+
+    // Fetch contest details
+    const match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
+    const [query_result] = await db_promise.execute(match_query, [match_id, contest_id]);
+
+    if (!query_result.length) {
+      return res.status(404).json({ status: "Failed", msg: "No match data found" });
+    }
+
+    const result = query_result[0];
+    const max_prize = JSON.parse(result.prize_order);
+    let prize_order = [];
+
     for (const [stage, value] of Object.entries(max_prize)) {
       const [rankPart, prize] = value.split(':');
-      let order_temp = []
-      if (rankPart.includes('-')) {
-        const [startRank, endRank] = rankPart.split('-').map(Number);
-        order_temp.push(startRank, endRank, Number(prize))
-        prize_order.push(order_temp)
-      } else {
-        // Handle single rank
-        const rank = parseInt(rankPart, 10);
-        order_temp.push(rank, rank, Number(prize))
-        prize_order.push(order_temp)
-      }
+      const rankData = rankPart.includes('-')
+        ? rankPart.split('-').map(Number)
+        : [parseInt(rankPart, 10), parseInt(rankPart, 10)];
+
+      prize_order.push([...rankData, Number(prize)]);
     }
 
-    let registeredPlayers = result.total_spots - result.spots_available;
-    let totalEntry = result.total_spots;
-    let entryFee = result.entry_fee
-    let platformFeeFilled = result.platform_filler_fee
-    let platformFeePercentNotFilled = result.platform_fee
-    const cnFilled = registeredPlayers === totalEntry;
+    const registeredPlayers = result.total_spots - result.spots_available;
+    const { total_spots, entry_fee, platform_filler_fee, platform_fee, minimum_players, type } = result;
+
+    const cnFilled = registeredPlayers === total_spots;
     let current_fill;
-
-
-    if (registeredPlayers < 0) {// result.minimum_players) { 
-      current_fill = {
-        prize_order: "Winners will be added soon...!"
-      }
+    
+    if (registeredPlayers < minimum_players) {
+      current_fill = { prize_order: "Winners will be added soon...!" };
+    } else {
+      current_fill = ranking_order(registeredPlayers, entry_fee, platform_filler_fee, platform_fee, prize_order, cnFilled);
     }
-    else {
-      current_fill = ranking_order(registeredPlayers,
-        entryFee,
-        platformFeeFilled,
-        platformFeePercentNotFilled,
-        prize_order,
-        cnFilled)
+    const max_fill = ranking_order(total_spots, entry_fee, platform_filler_fee, platform_fee, prize_order, true);
+    const leaderBoardData = await leaderBoard(match_id, contest_id, decoded_token.userId);
+
+    if (type === "practice") {
+      return res.json({ data: "Practice contest", leaderBoard: leaderBoardData });
     }
 
-    let max_fill = ranking_order(totalEntry,
-      entryFee,
-      platformFeeFilled,
-      platformFeePercentNotFilled,
-      prize_order,
-      true)
-
-    let data = await leaderBoard(match_id, contest_id, decoded_token.userId)
-    if (result.type == "practice") {
-      return res.json({ data: "Practice contest", leaderBorad: data })
-    }
-    res.json({ max_fill: max_fill.prizes_order, current_fill: current_fill.prizes_order, current_prizePool: current_fill.prize_pool, leaderBoard: data })
+    res.json({
+      max_fill: max_fill?.prizes_order || [],
+      current_fill: current_fill?.prizes_order || [],
+      current_prizePool: current_fill?.prize_pool || 0,
+      leaderBoard: leaderBoardData
+    });
 
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      status: "Failed",
-      msg: "Invalid or expired token"
-    })
+    console.error(error);
+    return res.status(500).json({ status: "Failed", msg: "An error occurred", error: error.message });
   }
-})
+});
 
 module.exports = router;

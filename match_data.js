@@ -631,7 +631,7 @@ function getPrize(position, prizes_order) {
             }
         }
     }
-    return '0'; 
+    return '0';
 }
 async function leaderBoard(match_id, contest_id, user_id) {
     let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
@@ -642,21 +642,7 @@ async function leaderBoard(match_id, contest_id, user_id) {
     if (!match_query_result.length) {
         return { error: "Match not found" };
     }
-
-
-
     if (match_query_result[0].status === "live") {
-        let [user_query] = await db_promise.execute(
-            `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
-            FROM (
-                SELECT user_id, points, 
-                RANK() OVER(ORDER BY points DESC) AS position
-                FROM registered_contest
-                WHERE match_id = ?
-            ) AS ranked_data
-            JOIN user_details ud ON ranked_data.user_id = ud.user_id;`,
-            [match_id]
-        );
 
         let [user_position] = await db_promise.execute(
             `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
@@ -669,6 +655,21 @@ async function leaderBoard(match_id, contest_id, user_id) {
             JOIN user_details ud ON ranked_data.user_id = ud.user_id WHERE ranked_data.user_id = ?;`,
             [match_id, user_id]
         );
+        if (user_position.length == 0) {
+            return { error: "user not found" }
+        }
+        let [user_query] = await db_promise.execute(
+            `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
+            FROM (
+                SELECT user_id, points, 
+                RANK() OVER(ORDER BY points DESC) AS position
+                FROM registered_contest
+                WHERE match_id = ?
+            ) AS ranked_data
+            JOIN user_details ud ON ranked_data.user_id = ud.user_id;`,
+            [match_id]
+        );
+
 
         if (!user_query.length) {
             return { error: "User not found in contest" };
@@ -676,9 +677,9 @@ async function leaderBoard(match_id, contest_id, user_id) {
 
         let prizeData = await prizeOrder(match_query_result[0]);
 
-        let user_prize = await getPrize(user_position[0].position,prizeData.prizes_order)
-        user_position[0].winnings =user_prize
-        
+        let user_prize = await getPrize(user_position[0].position, prizeData.prizes_order)
+        user_position[0].winnings = user_prize
+
         if (prizeData.data !== "Winners will be added soon...!") {
             let leaderBoard_data = [];
             user_query.map(users => {
