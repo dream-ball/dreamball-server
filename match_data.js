@@ -1,7 +1,5 @@
 const fs = require('fs');
 const { db, db_promise } = require('./database/db.js');
-
-
 const readData = (fileName) => {
     if (fs.existsSync(fileName)) {
         const data = fs.readFileSync(fileName);
@@ -477,7 +475,6 @@ async function update_leaderBoard(match_id) {
         console.log("No overs found for the match.");
         return;
     }
-
     let overs_data;
     if (overs_to[0].innings == 2 && overs_to[0].over_number == 1) {
         const [last_ball] = await db_promise.execute("SELECT MAX(over_number) AS max_over FROM `overs` WHERE match_id = ? AND innings = 1", [match_id]);
@@ -490,7 +487,6 @@ async function update_leaderBoard(match_id) {
         console.log("Over details not found");
         return;
     }
-
     let { wickets, runs, overs } = overs_data;
     let sixes = overs.filter(ball => ball === "6").length;
     let four = overs.filter(ball => ball === "4").length;
@@ -564,7 +560,91 @@ async function update_leaderBoard(match_id) {
         );
     }
 }
+async function finals_leaderBoard(match_id) {
+    let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
+    console.log(overs_to);
+    if (!overs_to.length) {
+        console.log("No overs found for the match.");
+        return;
+    }
+    let overs_data = await getOverData(match_id, overs_to[0].innings, overs_to[0].over_number);
+    if (!overs_data) {
+        console.log("Over details not found");
+        return;
+    }
+    let { wickets, runs, overs } = overs_data;
+    let sixes = overs.filter(ball => ball === "6").length;
+    let four = overs.filter(ball => ball === "4").length;
+    let dots = overs.filter(ball => ball === "0").length;
 
+    let [user_inputs] = await db_promise.execute(
+        "SELECT * FROM user_over_data WHERE match_id=? AND over_number=?",
+        [match_id, overs_to[0].over_number - 1]
+    );
+
+    for (const user_data of user_inputs) {
+        let points_gained = 0;
+
+        // Runs Calculation
+        if (user_data.run) {
+            const run_conditions = {
+                "1 - 5": runs >= 1 && runs <= 5,
+                "6 - 10": runs >= 6 && runs <= 10,
+                "More than 10": runs > 10,
+                "No Runs": runs === 0
+            };
+            points_gained += run_conditions[user_data.run] ? 1 : -1;
+        }
+
+        // Fours Calculation
+        if (user_data.four) {
+            const four_conditions = {
+                "1 - 2": four >= 1 && four <= 2,
+                "More than 2": four > 2,
+                "No Four": four === 0
+            };
+            points_gained += four_conditions[user_data.four] ? 1 : -1;
+        }
+
+        // Sixes Calculation
+        if (user_data.six) {
+            const six_conditions = {
+                "1 - 2": sixes >= 1 && sixes <= 2,
+                "More than 2": sixes > 2,
+                "No Sixes": sixes === 0
+            };
+            points_gained += six_conditions[user_data.six] ? 1 : -1;
+        }
+
+        // Wickets Calculation
+        if (user_data.wicket) {
+            const wicket_conditions = {
+                "1": wickets === 1,
+                "2": wickets === 2,
+                "More than 2": wickets > 2,
+                "No Wickets": wickets === 0
+            };
+            points_gained += wicket_conditions[user_data.wicket] ? 1 : -1;
+        }
+
+        // Dots Calculation
+        if (user_data.dot) {
+            const dot_conditions = {
+                "1 Dot": dots === 1,
+                "2 Dots": dots === 2,
+                "3 Dots": dots === 3,
+                "More than 3": dots > 3
+            };
+            points_gained += dot_conditions[user_data.dot] ? 1 : -1;
+        }
+        await db_promise.execute(
+            "UPDATE registered_contest SET points = points + ? WHERE match_id=? AND user_id=?",
+            [points_gained, user_data.match_id, user_data.user_id]
+        );
+    }
+    initiate_prize(match_id)
+    const [end_open_over] = await db_promise.execute("DELETE FROM open_overs WHERE match_id=?", [match_id])
+}
 async function prizeOrder(match_query_result) {
     let query_result = match_query_result
     result = query_result
@@ -614,9 +694,9 @@ async function prizeOrder(match_query_result) {
     return (current_fill)
 
 }
-
 function getPrize(position, prizes_order) {
     if (prizes_order != "Winners will be added soon...!") {
+
         for (const prize of prizes_order) {
             if (prize.rank.includes(`${position}`)) {
                 return prize.winnings;
@@ -636,40 +716,39 @@ function getPrize(position, prizes_order) {
 async function leaderBoard(match_id, contest_id, user_id) {
     let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
     let [match_query_result] = await db_promise.execute(match_query, [match_id, contest_id]);
-
-    let players_count = ((match_query_result[0].total_spots) - (match_query_result[0].spots_available));
-
     if (!match_query_result.length) {
         return { error: "Match not found" };
     }
-    if (match_query_result[0].status === "live") {
+    let players_count = ((match_query_result[0].total_spots) - (match_query_result[0].spots_available));
 
+    if (match_query_result[0].status === "live") {
         let [user_position] = await db_promise.execute(
             `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
             FROM (
                 SELECT user_id, points, 
                 RANK() OVER(ORDER BY points DESC) AS position
                 FROM registered_contest
-                WHERE match_id = ?
+                WHERE match_id = ? AND contest_id=?
             ) AS ranked_data
             JOIN user_details ud ON ranked_data.user_id = ud.user_id WHERE ranked_data.user_id = ?;`,
-            [match_id, user_id]
+            [match_id, contest_id, user_id]
         );
         if (user_position.length == 0) {
             return { error: "user not found" }
         }
         let [user_query] = await db_promise.execute(
-            `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
+            `SELECT ranked_data.user_id, ud.user_name, ud.user_profile, ranked_data.points, ranked_data.position
             FROM (
                 SELECT user_id, points, 
                 RANK() OVER(ORDER BY points DESC) AS position
                 FROM registered_contest
-                WHERE match_id = ?
+                WHERE match_id = ? AND contest_id = ?
             ) AS ranked_data
-            JOIN user_details ud ON ranked_data.user_id = ud.user_id;`,
-            [match_id]
+            JOIN user_details ud ON ranked_data.user_id = ud.user_id 
+            LIMIT 100;
+            `,
+            [match_id, contest_id]
         );
-
 
         if (!user_query.length) {
             return { error: "User not found in contest" };
@@ -705,6 +784,75 @@ async function leaderBoard(match_id, contest_id, user_id) {
         );
 
         return ({ players, players_count });
+    }
+}
+async function initiate_prize(match_id) {
+    const connection = await db_promise.getConnection(); // Get a connection for transaction
+
+    try {
+        await connection.beginTransaction(); // Start transaction
+
+        let match_query = "SELECT * FROM contest WHERE match_id=? AND status='live'";
+        let [match_query_result] = await connection.execute(match_query, [match_id]);
+
+        if (!match_query_result.length) {
+            throw new Error("Match not found or no live contests available"); // Prevent unnecessary execution
+        }
+
+        for (let match of match_query_result) {
+            let [user_query] = await connection.execute(
+                `SELECT ranked_data.user_id, ud.user_name, ud.user_profile, ranked_data.points, ranked_data.position
+                FROM (
+                    SELECT user_id, points, 
+                    RANK() OVER(ORDER BY points DESC) AS position
+                    FROM registered_contest
+                    WHERE match_id = ? AND contest_id = ?
+                ) AS ranked_data
+                JOIN user_details ud ON ranked_data.user_id = ud.user_id`,
+                [match_id, match.contest_id]
+            );
+
+            if (!user_query.length) {
+                console.warn(`No users found for contest ${match.contest_id}`);
+                continue; // Don't throw an error, just skip the contest
+            }
+
+            let prizeData = await prizeOrder(match);
+            if (prizeData.data !== "Winners will be added soon...!") {
+                let updatePromises = [];
+
+                for (let user of user_query) {
+                    let user_prize = getPrize(user.position, prizeData.prizes_order);
+                    if (user_prize !== 0) {
+                        updatePromises.push(
+                            connection.execute(
+                                "UPDATE user_details SET funds = funds + ? WHERE user_id = ?",
+                                [user_prize, user.user_id]
+                            )
+                        );
+                    }
+                }
+
+                // Execute all updates in parallel
+                if (updatePromises.length > 0) {
+                    await Promise.all(updatePromises);
+                }
+            }
+        }
+
+        // ✅ Update match and contest status after all updates
+        await connection.execute("UPDATE live_match_data SET status='ended' WHERE match_id=?", [match_id]);
+        await connection.execute("UPDATE contest SET status='ended' WHERE match_id=? AND status='live'", [match_id]);
+        await connection.execute("UPDATE registered_contest SET status='ended' WHERE match_id=?",[match_id])
+        await connection.commit(); // Commit transaction if everything is successful
+        return { success: true, message: "Prizes distributed successfully" };
+
+    } catch (error) {
+        await connection.rollback(); // Rollback on error
+        console.error(`Error in initiate_prize: ${error.message}`);
+        return { success: false, error: error.message };
+    } finally {
+        connection.release(); // ✅ Ensure connection is always released
     }
 }
 async function upcoming_matches(matchList) {
@@ -815,4 +963,4 @@ function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformF
     return ({ "prizes_order": groupAndDisplayPrizes(result.prizeDistribution), "prize_pool": result.prizePool });
 }
 
-module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard };
+module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard };

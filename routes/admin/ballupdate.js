@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { db, db_promise } = require("../../database/db.js");
-const {match_info,getOverData,update_leaderBoard} =require('../../match_data.js')
+const { match_info, getOverData, update_leaderBoard, finals_leaderBoard } = require('../../match_data.js')
 router.get('/admin/live_match/:match_id/info/', async (req, res) => {
   let { match_id } = req.params
   try {
@@ -80,9 +80,7 @@ router.post("/admin/live/over/:match_id/update", async (req,
 
   try {
     const over_data = await getOverData(match_id, innings, over_number);
-
     let over_id;
-
     if (!over_data) {
       const insertQuery = `
           INSERT INTO overs (match_id, over_number, bowler, runs, score, wickets, team, innings)
@@ -99,8 +97,8 @@ router.post("/admin/live/over/:match_id/update", async (req,
         innings,
       ]);
 
-      over_id = result.insertId; // Get the ID of the newly inserted over
-      console.log("Over data inserted successfully:", result);
+      over_id = result.insertId;
+      console.log("Over data inserted successfully:");
     } else {
       // Update existing over data
       const updateQuery = `
@@ -177,9 +175,22 @@ router.post("/admin/switch_innings/:match_id", (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Match not found" });
     }
-    // update_leaderBoard(match_id)
+    update_leaderBoard(match_id)
     res.json({ msg: "Innings changed" });
   });
+})
+
+router.post("/admin/end-match/:match_id", async (req, res) => {
+  try {
+    const { match_id } = req.params;
+
+    
+    finals_leaderBoard(match_id)
+    res.json({ msg: "match Ended" });
+  } catch (error) {
+    res.status(400).json({ error: "An error oocured" });
+
+  }
 })
 
 module.exports = router;

@@ -57,7 +57,7 @@ router.get('/api/live_match/:match_id',async (req, res) => {
   try {
     let decoded_token = validateJWT(token);
 
-    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", [match_id, decoded_token.userId])
+    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='ended'", [match_id, decoded_token.userId])
     if (!check_user_joined.length) {
       return res.status(404).json({
         status: "Failed",
@@ -65,11 +65,17 @@ router.get('/api/live_match/:match_id',async (req, res) => {
       })
     }
 
+    if(check_user_joined[0].status =="ended"){
+      return res.status(302).json({
+        status: "Redirection",
+        msg: "Match already ended"
+      })
+    }
+    let live_match_fetch = "SELECT * FROM live_match_data WHERE match_id=? AND status='live'"
 
-
-    let live_match_fetch = "SELECT * FROM live_match_data WHERE match_id=?"
     db.query(live_match_fetch, [match_id], (err, result) => {
       if (err) {
+        console.log(err);
         return res.status(500).json({
           status: "Failed",
           msg: "Connection error"
@@ -223,7 +229,6 @@ router.post('/api/user/selected_options/', async (req, res) => {
 
   }
 })
-
 
 router.get('/api/live/user/history/:match_id', async (req,res)=>{
   const {match_id} =req.params

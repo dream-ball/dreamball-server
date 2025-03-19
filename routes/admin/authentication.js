@@ -13,7 +13,6 @@ router.post("/admin/login", (req, res) => {
 
     if (username === ADMIN_USER && password === ADMIN_PASS) {
         const token = generateAdminJWT(username);
-        console.log(token)
         return res.json({ status: "ok", token });
     }
 

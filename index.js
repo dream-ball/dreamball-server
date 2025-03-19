@@ -2,14 +2,13 @@ const express = require("express");
 const router = express.Router();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const https = require("https");
 // user endpoints
 const contest = require("./routes/users/contest");
 const live = require("./routes/users/live");
 const login = require("./routes/users/login");
 const matches = require("./routes/users/matches");
 const payments = require("./routes/users/payments");
-
+const mails =require("./routes/users/mail")
 // admin endpoints
 
 const matchUpdateRoutes = require("./routes/admin/matchUpdate");
@@ -46,6 +45,7 @@ app.use(login);
 app.use(matches);
 app.use(contest);
 app.use(payments);
+app.use(mails)
 app.use(panRoutes);
 app.use(ballupdate)
 app.use(liveRoutes);
@@ -55,7 +55,6 @@ app.use(selectedMatchUpdate);
 app.use(authenticationRoutes);
 
 app.get("/", (req, res) => {
-  console.log("hi");
   res.json({
     status: "success",
     msg: "Hello World",
