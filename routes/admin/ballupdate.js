@@ -1,48 +1,31 @@
 const express = require("express");
 const router = express.Router();
 const { db, db_promise } = require("../../database/db.js");
-const { match_info, getOverData, update_leaderBoard, finals_leaderBoard } = require('../../match_data.js')
-router.get('/admin/live_match/:match_id/info/', async (req, res) => {
+const { match_info, getOverData, update_leaderBoard, finals_leaderBoard } = require('../../match_data.js');
+const adminAuth = require("../../middleware/adminAuth.js");
+router.get('/admin/live_match/:match_id/info/', adminAuth, async (req, res) => {
   let { match_id } = req.params
-  try {
 
+  try {
     if (!Number.isInteger(Number(match_id))) {
       res.status(400).json({ error: "Invalid match ID" });
       return;
     }
-
-    let live_check_query = "SELECT * From live_match_data WHERE match_id=?"
-    db.query(live_check_query, [match_id], async (live_check_err, live_check_result) => {
-      if (live_check_err) {
-        res.status(500).json({
-          status: "Failed",
-          error: 'Connection error'
-        })
-      }
-      if (!live_check_result.length) {
-        return res.status(404).json({
-          status: "Failed",
-          error: 'Macth not found'
-        })
-      }
-      let matchData = await match_info(match_id)
-      if (!matchData) {
-        return res.status(404).json({
-          status: "Failed",
-          error: "Details not found"
-        })
-      }
-
-      return res.json(matchData)
-
-    })
+    let matchData = await match_info(match_id)
+    if (!matchData) {
+      return res.status(404).json({
+        status: "Failed",
+        error: "Details not found"
+      })
+    }
+    return res.json(matchData)
   } catch (err) {
     return res.status(401).json({ status: "Failed", error: "Invalid or expired token" });
   }
 })
 
-router.get('/admin/live/matches', (req, res) => {
-  let LiveMatchQuery = "SELECT * FROM live_match_data ORDER BY s_no"
+router.get('/admin/live/matches', adminAuth, (req, res) => {
+  let LiveMatchQuery = "SELECT * FROM live_match_data WHERE status='live' ORDER BY s_no "
   db.query(LiveMatchQuery, (err, result) => {
     if (err) {
       console.log(err);
@@ -51,12 +34,12 @@ router.get('/admin/live/matches', (req, res) => {
     res.json(result)
   })
 })
-router.get('/admin/live/over/:match_id/:innings/:over_number', async (req, res) => {
+router.get('/admin/live/over/:match_id/:innings/:over_number', adminAuth, async (req, res) => {
   let { match_id, innings, over_number } = req.params
   let over_data = await getOverData(match_id, innings, over_number)
   res.json(over_data)
 })
-router.post("/admin/live/over/:match_id/update", async (req,
+router.post("/admin/live/over/:match_id/update", adminAuth, async (req,
   res) => {
   const { match_id } = req.params;
   const { innings, over_number, bowler, overs, runs, wickets, team } = req.body;
@@ -149,7 +132,7 @@ router.post("/admin/live/over/:match_id/update", async (req,
     return res.status(500).json({ error: "Failed to process over data" });
   }
 });
-router.post("/admin/close_over/:match_id", (req, res) => {
+router.post("/admin/close_over/:match_id", adminAuth, (req, res) => {
   const { match_id } = req.params;
   let update_query = "UPDATE open_overs SET over_number = over_number + 1 WHERE match_id = ?";
   db.query(update_query, [match_id], (err, result) => {
@@ -164,7 +147,7 @@ router.post("/admin/close_over/:match_id", (req, res) => {
     res.json({ msg: "Over Updated" });
   });
 })
-router.post("/admin/switch_innings/:match_id", (req, res) => {
+router.post("/admin/switch_innings/:match_id", adminAuth, (req, res) => {
   const { match_id } = req.params;
   let update_query = "UPDATE open_overs SET over_number = 1 , innings = innings + 1 WHERE match_id = ?";
   db.query(update_query, [match_id], (err, result) => {
@@ -180,11 +163,11 @@ router.post("/admin/switch_innings/:match_id", (req, res) => {
   });
 })
 
-router.post("/admin/end-match/:match_id", async (req, res) => {
+router.post("/admin/end-match/:match_id", adminAuth, async (req, res) => {
   try {
     const { match_id } = req.params;
 
-    
+
     finals_leaderBoard(match_id)
     res.json({ msg: "match Ended" });
   } catch (error) {

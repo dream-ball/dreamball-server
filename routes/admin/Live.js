@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { db, db_promise } = require("../../database/db");
+const adminAuth = require("../../middleware/adminAuth");
 
-router.get("/admin/getLiveMatches", (req, res) => {
+router.get("/admin/getLiveMatches" ,adminAuth, (req, res) => {
 
     let getLiveQuery = "SELECT * FROM live_match_data ";
   
@@ -17,9 +18,7 @@ router.get("/admin/getLiveMatches", (req, res) => {
     });  
 });
 
-
-
-router.post('/admin/abortLiveMatch/:id', async (req, res) => {
+router.post('/admin/abortLiveMatch/:id',adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   const {match_time,date_wise,match_data} = req.body;
 
@@ -47,13 +46,13 @@ router.post('/admin/abortLiveMatch/:id', async (req, res) => {
   }
 });
 
-router.get('/admin/cancelLiveMatch',(req,res)=>{
+router.get('/admin/cancelLiveMatch' ,adminAuth,(req,res)=>{
 
 
   res.send({status : 'cancel match'})
 })
 
-router.get('/admin/initiateRefund',(req,res)=>{
+router.get('/admin/initiateRefund',adminAuth,(req,res)=>{
 
   res.send({status : 'initiate refund'})
 })

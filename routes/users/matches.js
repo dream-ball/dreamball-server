@@ -152,5 +152,43 @@ router.get('/api/matches', (req, res) => {
       return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
     }
   });
+
+  router.get('/api/my-matches/history', async (req, res) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ status: "Failed", msg: "No token provided" });
+    }
+  
+    try {
+      let decoded_token = validateJWT(token);
+      let userId = decoded_token.userId;
+  
+      let live_query = "SELECT match_id FROM registered_contest WHERE user_id=? and status='ended'";
+      let user_live_matches = [];
+          db.query(live_query, [userId], (live_err, live_result) => {
+            if (live_err) {
+              return res.status(500).json({ status: "Failed", error: "Conection Error" });
+            }
+            if (live_result.length) {
+              let matchIds = live_result.map(match => match.match_id);
+              let get_live_match_query = `SELECT match_data FROM live_match_data WHERE match_id IN (?)`;
+  
+              db.query(get_live_match_query, [matchIds], (live_match_err, live_match_result) => {
+                if (live_match_err) {
+                  return res.status(500).json({ status: "Failed", error: "Conection Error" });
+                }
+                user_live_matches = live_match_result.map(match => JSON.parse(match.match_data));
+  
+                return res.json({ upcoming_matches: [], live_matches: user_live_matches });
+              });
+            } else {
+              return res.json({ upcoming_matches: [], live_matches: [] });
+            }
+          });
+  
+    } catch (err) {
+      return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+    }
+  });
   
   module.exports = router;

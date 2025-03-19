@@ -5,10 +5,9 @@ const fs = require('fs');
 // const { validateJWT } = require('../../middleware/jwt_token.js')
 
 const { readData, writeData } = require("../../utils/readFile");
-const { log } = require("console");
 const adminAuth = require('../../middleware/adminAuth');
 
-router.get("/admin/compare", (req, res) => {
+router.get("/admin/compare",adminAuth, (req, res) => {
   try {
 
     const oldMatch = readData("./data/upcoming_match_data.json");
@@ -23,7 +22,7 @@ router.get("/admin/compare", (req, res) => {
 
 });
 
-router.get("/admin/compareUpdate", (req, res) => {
+router.get("/admin/compareUpdate",adminAuth, (req, res) => {
 
   
   const newMatch = readData('./data/newData.json')
@@ -35,7 +34,7 @@ router.get("/admin/compareUpdate", (req, res) => {
 
 });
 
-router.get('/admin/removeOldMatch/:id', (req, res) => {
+router.get('/admin/removeOldMatch/:id',adminAuth, (req, res) => {
 
   const matchId = Number(req.params.id);
 
@@ -57,7 +56,7 @@ router.get('/admin/removeOldMatch/:id', (req, res) => {
 
 })
 
-router.get("/admin/forceRefresh/", (req, res) => {
+router.get("/admin/forceRefresh/",adminAuth , (req, res) => {
   const options = {
     method: "GET",
     headers: {

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { db, db_promise } = require("../../database/db");
-const { readData, writeFile } = require('../../utils/readFile')
+const adminAuth = require("../../middleware/adminAuth");
 
 
 function extendMinutes(timeStr) {
@@ -14,7 +14,7 @@ function extendMinutes(timeStr) {
   });
 }
 
-router.get("/admin/getSelectedMatch", (req, res) => {
+router.get("/admin/getSelectedMatch", adminAuth,(req, res) => {
   let query = `SELECT * FROM matches ORDER BY s_no`;
 
   db.query(query, (err, result) => {
@@ -30,7 +30,7 @@ router.get("/admin/getSelectedMatch", (req, res) => {
   });
 });
 
-router.post("/admin/removeSelectedMatch/:id", async (req, res) => {
+router.post("/admin/removeSelectedMatch/:id",adminAuth, async (req, res) => {
   const matchid = req.params.id;
   let deleteQuery = `DELETE FROM matches WHERE match_id=?`;
   let deleteContestQuery = `DELETE FROM contest WHERE match_id=?`;
@@ -48,7 +48,7 @@ router.post("/admin/removeSelectedMatch/:id", async (req, res) => {
   }
 });
 
-router.post('/admin/extendMatch/:id', async (req, res) => {
+router.post('/admin/extendMatch/:id',adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   console.log(matchId);
   const checkMatchQuery = `SELECT * FROM matches WHERE match_id=?`;
@@ -77,7 +77,7 @@ router.post('/admin/extendMatch/:id', async (req, res) => {
 
 })
 
-router.post("/admin/makeLive/:id", async (req, res) => {
+router.post("/admin/makeLive/:id",adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   const connection = await db_promise.getConnection();
 
