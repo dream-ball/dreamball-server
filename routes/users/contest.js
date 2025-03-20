@@ -115,7 +115,7 @@ router.post('/api/register/contest/:contest_id', async (req, res) => {
     }
 
     // Check user funds
-    const handle_fund = "SELECT funds FROM user_details WHERE user_id = ?";
+    const handle_fund = "SELECT SUM(deposits) + SUM(funds) as funds FROM `user_details` WHERE user_id = ?";
     const [user] = await db_promise.execute(handle_fund, [decoded_token.userId]);
     if (!user.length) {
       return res.status(404).json({ status: "Failed", msg: "User not found" });
@@ -147,8 +147,20 @@ router.post('/api/register/contest/:contest_id', async (req, res) => {
       await connection.beginTransaction();
 
       // Deduct funds
-      const deductFundsQuery = 'UPDATE user_details SET funds = funds - ? WHERE user_id = ?';
-      await connection.execute(deductFundsQuery, [entry_fee, decoded_token.userId]);
+      // const deductFundsQuery = 'UPDATE user_details SET funds = funds - ? WHERE user_id = ?';
+
+      const deductFundsQuery = `UPDATE user_details
+                  SET 
+                      deposits = CASE 
+                          WHEN deposits >= ? THEN deposits - ?
+                          ELSE 0
+                      END,
+                      funds = CASE 
+                          WHEN deposits >= ? THEN funds
+                          ELSE GREATEST(funds - (? - deposits), 0)
+                      END
+                  WHERE user_id = ? AND (deposits + funds) >= ?;`
+      await connection.execute(deductFundsQuery, [entry_fee, entry_fee, entry_fee, entry_fee, decoded_token.userId, entry_fee]);
 
       // Register user
       const registerContestQuery = `
@@ -251,7 +263,7 @@ router.get('/api/rankings/:match_id/:contest_id', async (req, res) => {
 
     const cnFilled = registeredPlayers === total_spots;
     let current_fill;
-    
+
     if (registeredPlayers < minimum_players) {
       current_fill = { prize_order: "Winners will be added soon...!" };
     } else {

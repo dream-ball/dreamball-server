@@ -34,6 +34,7 @@ app.use((req, res, next) => {
   next();
 });
 
+
 app.use(cors());
 app.use(router);
 app.use(bodyParser.json({ limit: "50mb" })); 
