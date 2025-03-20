@@ -78,7 +78,7 @@ router.get('/api/matches', (req, res) => {
       let userId = decoded_token.userId;
   
       let select_query = "SELECT match_id FROM registered_contest WHERE user_id=? and status='upcoming'";
-      let live_query = "SELECT match_id FROM registered_contest WHERE user_id=? and status='live'";
+      let live_query = "SELECT match_id FROM registered_contest WHERE user_id=? and status='live' OR status='cancelled'";
   
       let user_upcoming_matches = [];
       let user_live_matches = [];

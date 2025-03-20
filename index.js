@@ -36,10 +36,8 @@ app.use((req, res, next) => {
 
 app.use(cors());
 app.use(router);
-app.use(express.json());
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
-
+app.use(bodyParser.json({ limit: "50mb" })); 
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(live);
 app.use(login);
 app.use(matches);

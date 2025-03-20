@@ -14,7 +14,7 @@ function extendMinutes(timeStr) {
   });
 }
 
-router.get("/admin/getSelectedMatch", adminAuth,(req, res) => {
+router.get("/admin/getSelectedMatch", adminAuth, (req, res) => {
   let query = `SELECT * FROM matches ORDER BY s_no`;
 
   db.query(query, (err, result) => {
@@ -30,7 +30,7 @@ router.get("/admin/getSelectedMatch", adminAuth,(req, res) => {
   });
 });
 
-router.post("/admin/removeSelectedMatch/:id",adminAuth, async (req, res) => {
+router.post("/admin/removeSelectedMatch/:id", adminAuth, async (req, res) => {
   const matchid = req.params.id;
   let deleteQuery = `DELETE FROM matches WHERE match_id=?`;
   let deleteContestQuery = `DELETE FROM contest WHERE match_id=?`;
@@ -48,14 +48,14 @@ router.post("/admin/removeSelectedMatch/:id",adminAuth, async (req, res) => {
   }
 });
 
-router.post('/admin/extendMatch/:id',adminAuth, async (req, res) => {
+router.post('/admin/extendMatch/:id', adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   console.log(matchId);
   const checkMatchQuery = `SELECT * FROM matches WHERE match_id=?`;
   const [ress] = await db_promise.execute(checkMatchQuery, [matchId]);
   console.log(ress);
   match_time = extendMinutes(ress[0].match_time)
-  
+
   let match_data = ress[0].match_data;
 
   // let m_data = match_data.find((match) => match.match_id === matchId);
@@ -77,7 +77,7 @@ router.post('/admin/extendMatch/:id',adminAuth, async (req, res) => {
 
 })
 
-router.post("/admin/makeLive/:id",adminAuth, async (req, res) => {
+router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   const connection = await db_promise.getConnection();
 
@@ -92,17 +92,18 @@ router.post("/admin/makeLive/:id",adminAuth, async (req, res) => {
       return res.status(404).json({ status: "Match not found" });
     }
 
+
     const { date_wise, match_time, match_data: m_data } = ress[0];
 
     const delete_query = `DELETE FROM matches WHERE match_id =?`;
     const updateLiveQuery = `INSERT INTO live_match_data (match_id, match_time, date_wise, match_data) VALUES (?, ?, ?, ?)`;
     const updateLiveStatusRegisteredContest = `UPDATE registered_contest SET status = ? WHERE match_id = ?`;
-    const updateLiveStatusContest = `UPDATE contest SET status = ? WHERE match_id = ?`;
     const openOverQuery = `INSERT INTO open_overs (match_id, innings, over_number) VALUES (?, ?, ?)`;
+    const updateLiveStatusContest = `UPDATE contest SET status = ? WHERE match_id = ?`;
 
     await connection.execute(updateLiveStatusRegisteredContest, ["live", matchId]);
     await connection.execute(updateLiveStatusContest, ["live", matchId]);
-    await connection.execute(updateLiveQuery, [matchId, match_time, date_wise,m_data]);
+    await connection.execute(updateLiveQuery, [matchId, match_time, date_wise, m_data]);
     await connection.execute(openOverQuery, [matchId, 1, 1]);
 
     await connection.execute(delete_query, [matchId]);
@@ -124,5 +125,14 @@ router.post("/admin/makeLive/:id",adminAuth, async (req, res) => {
   }
 });
 
+async function run(matchId=7840) {
+   const [contests] =await db_promise.execute("SELECT * FROM contest WHERE match_id=?",[matchId])
+   console.log(contests);
+   contests.forEach(async (contest) => {
+    if((contest.total_spots - contest.spots_available)<3){
+    const [update_contest] =await db_promise.execute("UPDATE contest SET status='cancelled' WHERE match_id=? AND contest_id=?",[matchId,contest.contest_id])
+    }
+   }); 
+}
 
 module.exports = router;

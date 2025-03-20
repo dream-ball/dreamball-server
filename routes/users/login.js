@@ -81,7 +81,7 @@ router.get('/api/user', (req, res) => {
       })
     })
   } catch (err) {
-    res.json({
+    res.status(401).json({
       status: "Status Failed",
       msg: "Invalid or expired token"
     })

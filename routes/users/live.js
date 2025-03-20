@@ -14,7 +14,7 @@ router.get('/api/live_match/:match_id/info/', async (req, res) => {
       res.status(400).json({ error: "Invalid match ID" });
       return;
     }
-    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", [match_id, decoded_token.userId])
+    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='cancelled'", [match_id, decoded_token.userId])
     if (!check_user_joined.length) {
       return res.status(404).json({
         status: "Failed",
@@ -48,16 +48,17 @@ router.get('/api/live_match/:match_id/info/', async (req, res) => {
 
     })
   } catch (err) {
+    console.log(err);
     return res.status(401).json({ status: "Failed", error: "Invalid or expired token" });
   }
 })
-router.get('/api/live_match/:match_id',async (req, res) => {
+router.get('/api/live_match/:match_id', async (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   let { match_id } = req.params
   try {
     let decoded_token = validateJWT(token);
 
-    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='ended'", [match_id, decoded_token.userId])
+    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='cancelled'", [match_id, decoded_token.userId])
     if (!check_user_joined.length) {
       return res.status(404).json({
         status: "Failed",
@@ -65,7 +66,7 @@ router.get('/api/live_match/:match_id',async (req, res) => {
       })
     }
 
-    if(check_user_joined[0].status =="ended"){
+    if (check_user_joined[0].status == "ended") {
       return res.status(302).json({
         status: "Redirection",
         msg: "Match already ended"
@@ -75,7 +76,6 @@ router.get('/api/live_match/:match_id',async (req, res) => {
 
     db.query(live_match_fetch, [match_id], (err, result) => {
       if (err) {
-        console.log(err);
         return res.status(500).json({
           status: "Failed",
           msg: "Connection error"
@@ -100,7 +100,7 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
   try {
     let decoded_token = validateJWT(token);
 
-    let registered_contest_fetch = "SELECT * FROM registered_contest WHERE match_id=? and status='live'";
+    let registered_contest_fetch = "SELECT * FROM registered_contest WHERE match_id=? and status='live' OR status='cancelled'";
 
     db.query(registered_contest_fetch, [match_id], async (err, result) => {
       if (err) {
@@ -194,7 +194,6 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
 
     db.query(query, values, (err, result) => {
       if (err) {
-        console.log(err);
         return res.status(500).json({ error: "Connection Error" });
       }
       res.json({ success: true, msg: "Over data saved successfully", data: result });
@@ -230,8 +229,8 @@ router.post('/api/user/selected_options/', async (req, res) => {
   }
 })
 
-router.get('/api/live/user/history/:match_id', async (req,res)=>{
-  const {match_id} =req.params
+router.get('/api/live/user/history/:match_id', async (req, res) => {
+  const { match_id } = req.params
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
     const decoded_token = validateJWT(token)
@@ -242,22 +241,22 @@ router.get('/api/live/user/history/:match_id', async (req,res)=>{
       })
     }
 
-  const [user_inputs_1] =await db_promise.execute("SELECT * FROM user_over_data WHERE match_id= ? AND user_id=? AND innings =1",[match_id,decoded_token.userId])
-  const [user_inputs_2] =await db_promise.execute("SELECT * FROM user_over_data WHERE match_id= ? AND user_id=? AND innings =2",[match_id,decoded_token.userId])
-  let user_inputs={}
-  if(!user_inputs_1.length){
-    user_inputs["1"]=[]
-  }
-  else{
-    user_inputs["1"]=user_inputs_1
-  }
-  if(!user_inputs_2.length){
-    user_inputs["2"]=[]
-  }
-  else{
-    user_inputs["2"]=user_inputs_2
-  }
-  res.json([user_inputs])
+    const [user_inputs_1] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id= ? AND user_id=? AND innings =1", [match_id, decoded_token.userId])
+    const [user_inputs_2] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id= ? AND user_id=? AND innings =2", [match_id, decoded_token.userId])
+    let user_inputs = {}
+    if (!user_inputs_1.length) {
+      user_inputs["1"] = []
+    }
+    else {
+      user_inputs["1"] = user_inputs_1
+    }
+    if (!user_inputs_2.length) {
+      user_inputs["2"] = []
+    }
+    else {
+      user_inputs["2"] = user_inputs_2
+    }
+    res.json([user_inputs])
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
   }

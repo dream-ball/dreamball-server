@@ -16,13 +16,14 @@ function validateAdminJWT(token) {
     return null;
   }
 
-  console.log(process.env.JWT_TOKEN_ADMIN)
 
   try {
     return jwt.verify(token, secret_token);
   } catch (error) {
-    console.error("JWT verification failed:", error.message);
-    return null;
+    return res.json({
+      status:"Failed",
+      error:"Invalid or expired token"
+    });
   }
 }
 

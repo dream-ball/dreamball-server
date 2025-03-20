@@ -9,10 +9,11 @@ const adminAuth = (req, res, next) => {
 
   try {
     const decoded = validateAdminJWT(token);
-    req.admin = decoded; // Attach decoded data to request
+    req.admin = decoded; 
+
     next(); // Proceed to next middleware or route handler
   } catch (error) {
-    return res.status(403).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
