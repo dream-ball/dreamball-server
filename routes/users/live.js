@@ -131,79 +131,177 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
   }
 })
 
+// router.post('/api/submit/users/over_data/', async (req, res) => {
+//   const token = req.header('Authorization')?.replace('Bearer ', '');
+//   try {
+//     let decoded_token = validateJWT(token)
+//     let { match_id, over_number, innings } = req.body
+//     if (!match_id || !over_number || !innings) {
+//       return res.status(400).json({
+//         status: "Failed",
+//         error: "Invalid Data Sent"
+//       })
+//     }
+//     const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", [match_id, decoded_token.userId])
+//     if (!check_user_joined.length) {
+//       return res.status(404).json({
+//         status: "Failed",
+//         msg: "Invalid request"
+//       })
+//     }
+
+
+//     const [check_open_over] = await db_promise.execute('SELECT * FROM open_overs WHERE match_id=? and over_number=? and innings=?', [match_id, over_number, innings])
+//     if (!check_open_over.length) {
+//       return res.status(404).json({
+//         "status": "Failed",
+//         "msg": "Over is Ongoing"
+//       })
+//     }
+//     const { fours, sixes, runs, wickets, dots } = req.body;
+//     const validOptions = {
+//       fours: ['1 - 2', 'More than 2', 'No Four'],
+//       sixes: ['1 - 2', 'More than 2', 'No Sixes'],
+//       runs: ['1 - 5', '6 - 10', 'More than 10', 'No Runs'],
+//       wickets: ['1', '2', 'More than 2', 'No Wickets'],
+//       dots: ['1 Dot', '2 Dots', '3 Dots', 'More than 3'],
+//     };
+
+//     const isValid = (
+//       (fours === null || validOptions.fours.includes(fours)) &&
+//       (sixes === null || validOptions.sixes.includes(sixes)) &&
+//       (runs === null || validOptions.runs.includes(runs)) &&
+//       (wickets === null || validOptions.wickets.includes(wickets)) &&
+//       (dots === null || validOptions.dots.includes(dots))
+//     );
+
+//     if (!isValid) {
+//       return res.status(400).json({ error: "Invalid options selected. Please check your inputs." });
+//     }
+
+//     const query = `
+//             INSERT INTO user_over_data (user_id, match_id, innings, over_number, four, six, run, wicket, dot)
+//     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+//     ON DUPLICATE KEY UPDATE
+//       four = VALUES(four),
+//       six = VALUES(six),
+//       run = VALUES(run),
+//       wicket = VALUES(wicket),
+//       dot = VALUES(dot);
+//         `;
+//     const values = [decoded_token.userId, match_id, innings, over_number, fours, sixes, runs, wickets, dots];
+
+//     db.query(query, values, (err, result) => {
+//       if (err) {
+//         return res.status(500).json({ error: "Connection Error" });
+//       }
+//       res.json({ success: true, msg: "Over data saved successfully", data: result });
+//     });
+//   }
+//   catch (err) {
+//     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+
+//   }
+// });
+
+
 router.post('/api/submit/users/over_data/', async (req, res) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
-    let decoded_token = validateJWT(token)
-    let { match_id, over_number, innings } = req.body
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ status: "Failed", msg: "Token is required" });
+    }
+
+    let decoded_token;
+    try {
+      decoded_token = validateJWT(token);
+    } catch (err) {
+      return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+    }
+
+    const { match_id, over_number, innings, fours, sixes, runs, wickets, dots } = req.body;
+
     if (!match_id || !over_number || !innings) {
-      return res.status(400).json({
-        status: "Failed",
-        error: "Invalid Data Sent"
-      })
-    }
-    const [check_user_joined] = await db_promise.execute("SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", [match_id, decoded_token.userId])
-    if (!check_user_joined.length) {
-      return res.status(404).json({
-        status: "Failed",
-        msg: "Invalid request"
-      })
+      return res.status(400).json({ status: "Failed", error: "Invalid Data Sent" });
     }
 
+    const connection = await db_promise.getConnection();
+    try {
+      await connection.beginTransaction(); // Start transaction
 
-    const [check_open_over] = await db_promise.execute('SELECT * FROM open_overs WHERE match_id=? and over_number=? and innings=?', [match_id, over_number, innings])
-    if (!check_open_over.length) {
-      return res.status(404).json({
-        "status": "Failed",
-        "msg": "Over is Ongoing"
-      })
-    }
-    const { fours, sixes, runs, wickets, dots } = req.body;
-    const validOptions = {
-      fours: ['1 - 2', 'More than 2', 'No Four'],
-      sixes: ['1 - 2', 'More than 2', 'No Sixes'],
-      runs: ['1 - 5', '6 - 10', 'More than 10', 'No Runs'],
-      wickets: ['1', '2', 'More than 2', 'No Wickets'],
-      dots: ['1 Dot', '2 Dots', '3 Dots', 'More than 3'],
-    };
+      // Check if user has joined the contest
+      const [check_user_joined] = await connection.execute(
+        "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", 
+        [match_id, decoded_token.userId]
+      );
 
-    const isValid = (
-      (fours === null || validOptions.fours.includes(fours)) &&
-      (sixes === null || validOptions.sixes.includes(sixes)) &&
-      (runs === null || validOptions.runs.includes(runs)) &&
-      (wickets === null || validOptions.wickets.includes(wickets)) &&
-      (dots === null || validOptions.dots.includes(dots))
-    );
-
-    if (!isValid) {
-      return res.status(400).json({ error: "Invalid options selected. Please check your inputs." });
-    }
-
-    const query = `
-            INSERT INTO user_over_data (user_id, match_id, innings, over_number, four, six, run, wicket, dot)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      four = VALUES(four),
-      six = VALUES(six),
-      run = VALUES(run),
-      wicket = VALUES(wicket),
-      dot = VALUES(dot);
-      
-        `;
-    const values = [decoded_token.userId, match_id, innings, over_number, fours, sixes, runs, wickets, dots];
-
-    db.query(query, values, (err, result) => {
-      if (err) {
-        return res.status(500).json({ error: "Connection Error" });
+      if (!check_user_joined.length) {
+        await connection.rollback();
+        return res.status(404).json({ status: "Failed", msg: "Invalid request" });
       }
-      res.json({ success: true, msg: "Over data saved successfully", data: result });
-    });
-  }
-  catch (err) {
-    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
 
+      // Check if the over is open
+      const [check_open_over] = await connection.execute(
+        "SELECT * FROM open_overs WHERE match_id=? AND over_number=? AND innings=?", 
+        [match_id, over_number, innings]
+      );
+
+      if (!check_open_over.length) {
+        await connection.rollback();
+        return res.status(404).json({ status: "Failed", msg: "Over is Ongoing" });
+      }
+
+      // Validate input options
+      const validOptions = {
+        fours: ['1 - 2', 'More than 2', 'No Four'],
+        sixes: ['1 - 2', 'More than 2', 'No Sixes'],
+        runs: ['1 - 5', '6 - 10', 'More than 10', 'No Runs'],
+        wickets: ['1', '2', 'More than 2', 'No Wickets'],
+        dots: ['1 Dot', '2 Dots', '3 Dots', 'More than 3'],
+      };
+
+      const isValid =
+        (fours === null || validOptions.fours.includes(fours)) &&
+        (sixes === null || validOptions.sixes.includes(sixes)) &&
+        (runs === null || validOptions.runs.includes(runs)) &&
+        (wickets === null || validOptions.wickets.includes(wickets)) &&
+        (dots === null || validOptions.dots.includes(dots));
+
+      if (!isValid) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Invalid options selected. Please check your inputs." });
+      }
+
+      // Insert or update the user_over_data table
+      const query = `
+        INSERT INTO user_over_data (user_id, match_id, innings, over_number, four, six, run, wicket, dot)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          four = VALUES(four),
+          six = VALUES(six),
+          run = VALUES(run),
+          wicket = VALUES(wicket),
+          dot = VALUES(dot);
+      `;
+      const values = [decoded_token.userId, match_id, innings, over_number, fours, sixes, runs, wickets, dots];
+
+      await connection.execute(query, values);
+      await connection.commit();
+
+      res.json({ success: true, msg: "Over data saved successfully" });
+
+    } catch (error) {
+      await connection.rollback();
+      console.error("Database Error:", error);
+      res.status(500).json({ error: "Internal Server Error", details: error.message });
+    } finally {
+      connection.release(); // Release the DB connection
+    }
+  } catch (err) {
+    return res.status(500).json({ status: "Failed", msg: "Server error", error: err.message });
   }
 });
+
 
 
 router.post('/api/user/selected_options/', async (req, res) => {
