@@ -52,12 +52,13 @@ router.post('/admin/extendMatch/:id', adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   const checkMatchQuery = `SELECT * FROM matches WHERE match_id=?`;
   const [ress] = await db_promise.execute(checkMatchQuery, [matchId]);
-  console.log(ress[0].match_time);
   match_time = extendMinutes(ress[0].match_time)
-  console.log(match_time);
+  let json_match_data = ress[0].match_data
+  console.log(json_match_data);   
   let match_data = ress[0].match_data;
   const extendQuery = 'UPDATE matches SET match_time=? WHERE match_id=?';
   try {
+
 
      const [result] = await db_promise.execute(extendQuery,[match_time,matchId]);
     // const result = await db_promise.execute("SELECT * FROM matches ;", [matchId]);

@@ -25,17 +25,17 @@ const {generateUser_id } = require('./middleware/user_id.js');
 const app = express();
 const port = 5000;
 
-app.use((req, res, next) => {
-  res.setHeader("X-Powered-By", "Node.js");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; connect-src 'self' https://13.127.231.62;"
-  );
-  next();
-});
+// app.use((req, res, next) => {
+//   res.setHeader("X-Powered-By", "Node.js");
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   res.setHeader(
+//     'Content-Security-Policy',
+//     "default-src 'self'; connect-src 'self' https://13.127.231.62;"
+//   );
+//   next();
+// });
 
 app.use(cors());
 app.use(router);
