@@ -240,7 +240,6 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
         return res.status(404).json({ status: "Failed", msg: "Invalid request" });
       }
 
-      // Check if the over is open
       const [check_open_over] = await connection.execute(
         "SELECT * FROM open_overs WHERE match_id=? AND over_number=? AND innings=?", 
         [match_id, over_number, innings]
@@ -251,7 +250,6 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
         return res.status(404).json({ status: "Failed", msg: "Over is Ongoing" });
       }
 
-      // Validate input options
       const validOptions = {
         fours: ['1 - 2', 'More than 2', 'No Four'],
         sixes: ['1 - 2', 'More than 2', 'No Sixes'],
@@ -259,7 +257,6 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
         wickets: ['1', '2', 'More than 2', 'No Wickets'],
         dots: ['1 Dot', '2 Dots', '3 Dots', 'More than 3'],
       };
-
       const isValid =
         (fours === null || validOptions.fours.includes(fours)) &&
         (sixes === null || validOptions.sixes.includes(sixes)) &&
@@ -287,8 +284,6 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
 
       await connection.execute(query, values);
       await connection.commit();
-      console.log("Inserting Overs Data for users");
-      console.log(match_id, over_number, innings, fours, sixes, runs, wickets, dots);
       res.json({ success: true, msg: "Over data saved successfully" });
 
     } catch (error) {
@@ -296,7 +291,7 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
       console.error("Database Error:", error);
       res.status(500).json({ error: "Internal Server Error", details: error.message });
     } finally {
-      connection.release(); // Release the DB connection
+      connection.release(); 
     }
   } catch (err) {
     return res.status(500).json({ status: "Failed", msg: "Server error", error: err.message });

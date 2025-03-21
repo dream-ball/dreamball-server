@@ -373,7 +373,7 @@ async function run_upload_data() {
 
 async function update_leaderBoard(match_id) {
     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
-    console.log(overs_to);
+    console.log("this the open over",overs_to);
     if (!overs_to.length) {
         console.log("No overs found for the match.");
         return;
@@ -388,7 +388,7 @@ async function update_leaderBoard(match_id) {
 
     }
 
-    console.log(overs_data);
+    console.log("This is oves data",overs_data);
     if (!overs_data) {
         console.log("Over details not found");
         return;
