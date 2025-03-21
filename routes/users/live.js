@@ -287,7 +287,8 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
 
       await connection.execute(query, values);
       await connection.commit();
-
+      console.log("Inserting Overs Data for users");
+      console.log(match_id, over_number, innings, fours, sixes, runs, wickets, dots);
       res.json({ success: true, msg: "Over data saved successfully" });
 
     } catch (error) {
