@@ -48,8 +48,10 @@ router.post('/admin/abortLiveMatch/:id',adminAuth, async (req, res) => {
 
 router.get('/admin/cancelLiveMatch' ,adminAuth,(req,res)=>{
 
-
   res.send({status : 'cancel match'})
+
+
+  
 })
 
 router.get('/admin/initiateRefund',adminAuth,(req,res)=>{

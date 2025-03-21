@@ -22,7 +22,7 @@ const db_promise = mysql_promise.createPool({
   password: '',  
   database: 'match_data',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 50,
   queueLimit: 0
 });
 

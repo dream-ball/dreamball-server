@@ -34,7 +34,6 @@ router.get("/admin/upcomingMatches", adminAuth, (req, res) => {
 router.post("/admin/updateSelectedMatch/:id",adminAuth, async (req, res) => {
   const matchId = Number(req.params.id);
   let default_contest = read_default_contest();
-  console.log(default_contest);
   if (!default_contest.length) {
     return res.status(404).json({
       status: "Failed",

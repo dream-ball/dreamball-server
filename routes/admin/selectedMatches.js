@@ -50,26 +50,17 @@ router.post("/admin/removeSelectedMatch/:id", adminAuth, async (req, res) => {
 
 router.post('/admin/extendMatch/:id', adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
-  console.log(matchId);
   const checkMatchQuery = `SELECT * FROM matches WHERE match_id=?`;
   const [ress] = await db_promise.execute(checkMatchQuery, [matchId]);
-  console.log(ress);
+  console.log(ress[0].match_time);
   match_time = extendMinutes(ress[0].match_time)
-
+  console.log(match_time);
   let match_data = ress[0].match_data;
-
-  // let m_data = match_data.find((match) => match.match_id === matchId);
-
-
-  // const extendQuery = 'UPDATE matches SET match_time=? WHERE match_id=?';
-
+  const extendQuery = 'UPDATE matches SET match_time=? WHERE match_id=?';
   try {
 
-    // const result = await db_promise.execute(extendQuery,[match_time,matchId]);
-    const result = await db_promise.execute("SELECT * FROM matches ;", [matchId]);
-
-    console.log(result);
-    console.log(matchId);
+     const [result] = await db_promise.execute(extendQuery,[match_time,matchId]);
+    // const result = await db_promise.execute("SELECT * FROM matches ;", [matchId]);
     return res.status(200).send({ status: 'completed' })
   } catch (error) {
     res.status(500).send({ Error: 'Internal server error' })
