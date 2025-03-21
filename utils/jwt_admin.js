@@ -6,7 +6,7 @@ function generateAdminJWT(userID) {
   if (!secret_token) {
     throw new Error("JWT secret key is missing!");
   }
-  return jwt.sign({ userId: userID }, secret_token, { expiresIn: '30m' });
+  return jwt.sign({ userId: userID }, secret_token, { expiresIn: '30h' });
 }
 
 function validateAdminJWT(token) {
