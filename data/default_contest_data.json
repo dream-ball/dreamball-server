@@ -65,7 +65,7 @@
     },
     {
         "total_amount": 0,
-        "prize_pool": "Practice Contest",
+        "prize_pool": 0,
         "entry_fee": 0,
         "total_spots": 20,
         "contest_id": 5,
