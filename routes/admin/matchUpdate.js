@@ -86,6 +86,7 @@ router.post("/admin/updateSelectedMatch/:id",adminAuth, async (req, res) => {
     await connection.commit();
     return res.json({ status: "Updated successfully" });
   } catch (error) {
+    console.log(error);
     await connection.rollback();
     return res
       .status(500)
