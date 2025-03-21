@@ -757,8 +757,7 @@ async function leaderBoard(match_id, contest_id, user_id) {
                 FROM registered_contest
                 WHERE match_id = ? AND contest_id = ?
             ) AS ranked_data
-            JOIN user_details ud ON ranked_data.user_id = ud.user_id 
-            LIMIT 100;
+            JOIN user_details ud ON ranked_data.user_id = ud.user_id;
             `,
             [match_id, contest_id]
         );
