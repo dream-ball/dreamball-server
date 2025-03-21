@@ -205,6 +205,7 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
   }
 });
 
+
 router.post('/api/user/selected_options/', async (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   const { match_id, over_number, innings } = req.body
@@ -217,11 +218,11 @@ router.post('/api/user/selected_options/', async (req, res) => {
       })
     }
     const [check] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=? AND over_number=? and innings=?", [match_id, over_number, innings])
-    console.log(check);
     if (!check.length) {
       return res.status(404).json({ status: "Failed", msg: "Invalid request" });
     }
     const [options] = await db_promise.execute("SELECT * FROM user_over_data WHERE user_id=? AND match_id=? AND over_number=? AND innings=?", [decoded_token.userId, match_id, over_number, innings])
+    console.log("UserData");
     console.log(options);
     res.json(options)
   } catch (error) {
