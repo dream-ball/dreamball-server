@@ -380,14 +380,16 @@ async function update_leaderBoard(match_id) {
     }
     let overs_data;
     if (overs_to[0].innings == 2 && overs_to[0].over_number == 1) {
+        console.log(overs_to[0].innings, (overs_to[0].over_number) - 1)
+        console.log("1");
         const [last_ball] = await db_promise.execute("SELECT MAX(over_number) FROM `overs` WHERE match_id = ? and innings =1", [match_id])
         overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
     }
     else {
+        console.log(overs_to[0].innings, (overs_to[0].over_number) - 1)
+        console.log("2");
         overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
-
     }
-
     console.log("This is oves data",overs_data);
     if (!overs_data) {
         console.log("Over details not found");
