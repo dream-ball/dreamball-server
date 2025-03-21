@@ -163,7 +163,7 @@ router.post("/admin/switch_innings/:match_id", adminAuth, (req, res) => {
   });
 })
 
-router.post("/admin/end-match/:match_id", adminAuth, async (req, res) => {
+router.post("/admin/end-match/:match_id", async (req, res) => {
   try {
     const { match_id } = req.params;
 

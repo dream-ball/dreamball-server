@@ -49,7 +49,6 @@ router.get('/admin/cancelMatch/:matchId', adminAuth, async (req, res) => {
     const deleteLiveMatchData = `UPDATE live_match_data SET status='ended' WHERE match_id = ?`;
     const revertLiveStatusRegisteredContest = `UPDATE registered_contest SET status = 'ended' WHERE match_id = ? AND status='live'`;
     const revertLiveStatusContest = `UPDATE contest SET status ='ended' WHERE match_id = ? AND status='live'`;
-
     console.log(`Initiating refund for match ${matchId}...`);
 
     // Fetch users who joined the contest

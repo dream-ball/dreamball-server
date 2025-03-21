@@ -5,12 +5,20 @@ const adminAuth = require("../../middleware/adminAuth");
 
 
 function extendMinutes(timeStr) {
-  return timeStr.replace(/:(\d{2})/, (match, minute) => {
+  return timeStr.replace(/(\d{1,2}):(\d{2})/, (match, hour, minute) => {
     let newMinute = parseInt(minute) + 10;
+    let newHour = parseInt(hour);
+
     if (newMinute >= 60) {
-      newMinute -= 60; // Wrap around minutes
+      newMinute -= 60; // Reset minutes
+      newHour += 1; // Increment hour
     }
-    return `:${String(newMinute).padStart(2, '0')}`;
+
+    // Ensure formatting (e.g., 01 instead of 1)
+    newMinute = newMinute.toString().padStart(2, '0');
+    newHour = newHour.toString().padStart(2, '0');
+
+    return `${newHour}:${newMinute}`;
   });
 }
 
@@ -34,7 +42,6 @@ router.post("/admin/removeSelectedMatch/:id", adminAuth, async (req, res) => {
   const matchid = req.params.id;
   let deleteQuery = `DELETE FROM matches WHERE match_id=?`;
   let deleteContestQuery = `DELETE FROM contest WHERE match_id=?`;
-
   const connection = await db_promise.getConnection();
   try {
     await connection.beginTransaction();
@@ -67,6 +74,64 @@ router.post('/admin/extendMatch/:id', adminAuth, async (req, res) => {
 
 })
 
+// router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
+//   const matchId = parseInt(req.params.id);
+//   const connection = await db_promise.getConnection();
+
+//   try {
+//     await connection.beginTransaction(); // Start Transaction
+
+//     const checkMatchQuery = `SELECT * FROM matches WHERE match_id=?`;
+//     const [ress] = await connection.execute(checkMatchQuery, [matchId]);
+
+//     if (ress.length === 0) {
+//       await connection.rollback(); // Rollback if match not found
+//       return res.status(404).json({ status: "Match not found" });
+//     }
+
+
+//     const { date_wise, match_time, match_data: m_data } = ress[0];
+//     const delete_query = `DELETE FROM matches WHERE match_id =?`;
+//     const updateLiveQuery = `INSERT INTO live_match_data (match_id, match_time, date_wise, match_data) VALUES (?, ?, ?, ?)`;
+//     // const updateLiveStatusRegisteredContest = `UPDATE registered_contest SET status = ? WHERE match_id = ?`;
+//     const openOverQuery = `INSERT INTO open_overs (match_id, innings, over_number) VALUES (?, ?, ?)`;
+
+//     const [contests] = await db_promise.execute("SELECT * FROM contest WHERE match_id=?", [matchId])
+//     contests.forEach(async (contest) => {
+//       if ((contest.total_spots - contest.spots_available) < 3) {
+//         await db_promise.execute("UPDATE contest SET status='cancelled' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id])
+//         await db_promise.execute("UPDATE registered_contest SET status='cancelled' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id])
+//         const [users] = await db_promise.execute(
+//           "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND contest_id=? status='live'",
+//           [matchId,contest.contest_id] 
+
+//         );
+//       }
+//       else {
+//         await db_promise.execute("UPDATE contest SET status='live' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id])
+//         await db_promise.execute("UPDATE registered_contest SET status='live' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id])
+//       }
+//     });
+
+//     // await connection.execute(updateLiveStatusRegisteredContest, ["live", matchId]);
+//     await connection.execute(updateLiveQuery, [matchId, match_time, date_wise, m_data]);
+//     await connection.execute(openOverQuery, [matchId, 1, 1]);
+//     await connection.execute(delete_query, [matchId]);
+//     await connection.commit();
+//     console.log(`Match ${matchId} removed from selected matches`);
+//     console.log(`Match ${matchId} is Live Now`);
+//     return res.status(200).json({ status: "Match is live" });
+
+//   } catch (error) {
+//     await connection.rollback(); // Rollback on error
+//     console.error(`Error making match ${matchId} live:`, error);
+//     return res.status(500).json({ status: "Error making match live", error: error.message });
+
+//   } finally {
+//     connection.release(); // Release connection
+//   }
+// });
+
 router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
   const connection = await db_promise.getConnection();
@@ -82,29 +147,39 @@ router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
       return res.status(404).json({ status: "Match not found" });
     }
 
-
     const { date_wise, match_time, match_data: m_data } = ress[0];
     const delete_query = `DELETE FROM matches WHERE match_id =?`;
     const updateLiveQuery = `INSERT INTO live_match_data (match_id, match_time, date_wise, match_data) VALUES (?, ?, ?, ?)`;
-    // const updateLiveStatusRegisteredContest = `UPDATE registered_contest SET status = ? WHERE match_id = ?`;
     const openOverQuery = `INSERT INTO open_overs (match_id, innings, over_number) VALUES (?, ?, ?)`;
 
-    const [contests] = await db_promise.execute("SELECT * FROM contest WHERE match_id=?", [matchId])
-    contests.forEach(async (contest) => {
-      if ((contest.total_spots - contest.spots_available) < 3) {
-        await db_promise.execute("UPDATE contest SET status='cancelled' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id])
-        await db_promise.execute("UPDATE registered_contest SET status='cancelled' WHERE match_id=? AND contest_id=?",[matchId,contest.contest_id])
-      }
-      else {
-        await db_promise.execute("UPDATE contest SET status='live' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id])
-        await db_promise.execute("UPDATE registered_contest SET status='live' WHERE match_id=? AND contest_id=?",[matchId,contest.contest_id])
-      }
-    });
+    const [contests] = await db_promise.execute("SELECT * FROM contest WHERE match_id=?", [matchId]);
 
-    // await connection.execute(updateLiveStatusRegisteredContest, ["live", matchId]);
+    for (const contest of contests) {
+      if (contest.total_spots - contest.spots_available < 3) {
+        await db_promise.execute("UPDATE contest SET status='cancelled' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id]);
+        await db_promise.execute("UPDATE registered_contest SET status='cancelled' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id]);
+
+        const [users] = await db_promise.execute(
+          "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND contest_id=? AND status='live'",
+          [matchId, contest.contest_id]
+        );
+
+        for (const user of users) {
+          await db_promise.execute(
+            "UPDATE user_details SET deposits = deposits + ? WHERE user_id = ?",
+            [user.entry_fee, user.user_id]
+          );
+        }
+      } else {
+        await db_promise.execute("UPDATE contest SET status='live' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id]);
+        await db_promise.execute("UPDATE registered_contest SET status='live' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id]);
+      }
+    }
+
     await connection.execute(updateLiveQuery, [matchId, match_time, date_wise, m_data]);
     await connection.execute(openOverQuery, [matchId, 1, 1]);
     await connection.execute(delete_query, [matchId]);
+
     await connection.commit();
     console.log(`Match ${matchId} removed from selected matches`);
     console.log(`Match ${matchId} is Live Now`);
@@ -114,7 +189,6 @@ router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
     await connection.rollback(); // Rollback on error
     console.error(`Error making match ${matchId} live:`, error);
     return res.status(500).json({ status: "Error making match live", error: error.message });
-
   } finally {
     connection.release(); // Release connection
   }

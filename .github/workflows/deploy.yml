@@ -1,4 +1,4 @@
-name: Deploy React App to AWS
+name: Deploy Backend to AWS
 
 on:
   push:
@@ -20,8 +20,8 @@ jobs:
 
       - name: Deploy to AWS
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@3.109.60.44 << 'EOF'
-            cd /home/ec2-user/dreamball-server
+          ssh -o StrictHostKeyChecking=no ubuntu@65.1.92.7 << 'EOF'
+            cd /home/ubuntu/dreamball-server
             git pull origin master
             npm install
             pm2 restart 0

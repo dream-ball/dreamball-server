@@ -21,6 +21,7 @@ const panRoutes = require("./routes/admin/pan");
 const authenticationRoutes = require("./routes/admin/authentication");
 const ballupdate = require('./routes/admin/ballupdate');
 const {generateUser_id } = require('./middleware/user_id.js');
+const { readData } = require("./utils/readFile.js");
 
 const app = express();
 const port = 5000;
@@ -54,6 +55,11 @@ app.use(compareRoutes);
 app.use(matchUpdateRoutes);
 app.use(selectedMatchUpdate);
 app.use(authenticationRoutes);
+
+app.get('/file',async (req,res)=>{
+  let file_data = await readData('./data/bak.sql')
+  res.send(file_data)
+})
 
 app.get("/", (req, res) => {
   res.json({

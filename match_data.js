@@ -366,10 +366,10 @@ async function run_upload_data() {
     }
 }
 
-run_upload_data()
-setInterval(async() => {
-    await run_upload_data()
-}, 10000);
+// run_upload_data()
+// setInterval(async() => {
+//     await run_upload_data()
+// }, 10000);
 
 // async function update_leaderBoard(match_id) {
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
