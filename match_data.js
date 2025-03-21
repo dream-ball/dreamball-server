@@ -315,7 +315,7 @@ async function match_info(match_id) {
 const options = {
     method: 'GET',
     headers: {
-        'x-rapidapi-key': '7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f',//vignesh :8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a //ama : d8a433c819msh5f6984e6e8d52d2p10084fjsn90afec517a0a //thaya:5beed19ad2mshfedc45ca698b32ep1e1644jsnf4cb628a6065  453326: 7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f
+        'x-rapidapi-key': '8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a',//vignesh :8c2f175bb9msh42d2c4435c1685cp15de67jsnf4fa85f71f8a //ama : d8a433c819msh5f6984e6e8d52d2p10084fjsn90afec517a0a //thaya:5beed19ad2mshfedc45ca698b32ep1e1644jsnf4cb628a6065  453326: 7bd5c8ca5amsh8d14f218e111023p1b6fcejsn7a1117337a5f
         'x-rapidapi-host': 'cricket-live-line1.p.rapidapi.com'
     }
 };
@@ -357,6 +357,19 @@ function update_overs() {
     })
 
 }
+
+async function run_upload_data() {
+    const [matches_data] = await db_promise.execute("SELECT * FROM live_match_data WHERE status='live'")
+    if (matches_data.length > 0) {
+        await update_overs()
+        await update_live_matches()
+    }
+}
+
+run_upload_data()
+setInterval(async() => {
+    await run_upload_data()
+}, 10000);
 
 // async function update_leaderBoard(match_id) {
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
@@ -843,7 +856,7 @@ async function initiate_prize(match_id) {
         // ✅ Update match and contest status after all updates
         await connection.execute("UPDATE live_match_data SET status='ended' WHERE match_id=?", [match_id]);
         await connection.execute("UPDATE contest SET status='ended' WHERE match_id=? AND status='live'", [match_id]);
-        await connection.execute("UPDATE registered_contest SET status='ended' WHERE match_id=?",[match_id])
+        await connection.execute("UPDATE registered_contest SET status='ended' WHERE match_id=?", [match_id])
         await connection.commit(); // Commit transaction if everything is successful
         return { success: true, message: "Prizes distributed successfully" };
 

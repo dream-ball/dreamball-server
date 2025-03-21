@@ -6,7 +6,6 @@ const { db, db_promise } = require('../../database/db.js');
 
 
 router.get('/api/matches', (req, res) => {
-  console.log("Hello it's me again");
 
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
