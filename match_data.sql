@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 21, 2025 at 09:26 AM
+-- Generation Time: Mar 21, 2025 at 10:10 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -96,17 +96,6 @@ CREATE TABLE `contest` (
   `status` varchar(55) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `contest`
---
-
-INSERT INTO `contest` (`s_no`, `match_id`, `contest_id`, `prize_pool`, `entry_fee`, `total_spots`, `spots_available`, `platform_fee`, `platform_filler_fee`, `type`, `minimum_players`, `prize_order`, `status`) VALUES
-(988, 7683, '1', 100, 10, 12, 9, 10, 20, 'entry', 3, '{\"stage1\":\"1:25\",\"stage2\":\"2:15\",\"stage3\":\"3-8:10\"}', 'ended'),
-(989, 7683, '2', 16750, 99, 225, 225, 25, 5525, 'entry', 3, '{\"stage1\":\"1:700\",\"stage2\":\"2:800\",\"stage3\":\"3-4:500\",\"stage4\":\"5-6:300\",\"stage5\":\"7-25:225\",\"stage6\":\"26-50:175\",\"stage7\":\"51-100:80\"}', 'cancelled'),
-(990, 7683, '3', 126000, 75, 2000, 2000, 18, 24000, 'entry', 3, '{\"stage1\":\"1-420:300\"}', 'cancelled'),
-(991, 7683, '4', 810, 45, 21, 21, 18, 135, 'entry', 3, '{\"stage1\":\"1-9:90\"}', 'cancelled'),
-(992, 7683, '5', 0, 0, 20, 20, 0, 0, 'practice', 1, '{\"stage1\":\"1-20:0\"}', 'cancelled');
-
 -- --------------------------------------------------------
 
 --
@@ -136,13 +125,6 @@ CREATE TABLE `live_match_data` (
   `status` varchar(20) NOT NULL DEFAULT 'live'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `live_match_data`
---
-
-INSERT INTO `live_match_data` (`s_no`, `match_id`, `match_time`, `date_wise`, `live_time`, `match_data`, `status`) VALUES
-(185, 7683, '03:30 PM', '21 Mar 2025, Friday', '2025-03-21 13:04:09', '{\"team_b_id\":607,\"date_wise\":\"21 Mar 2025, Friday\",\"max_rate\":\"0.00\",\"match_id\":7683,\"venue\":\"Cartama Oval, Cartama\",\"match_status\":\"Upcoming\",\"matchs\":\"Eliminator, Championship Week\",\"venue_id\":223,\"series\":\"European Cricket League, 2025\",\"team_a_id\":639,\"match_date\":\"21-Mar\",\"team_a_img\":\"https://cricketchampion.co.in/webroot/img/teams/1405363061_team.png\",\"min_rate\":\"0.00\",\"match_time\":\"03:30 PM\",\"match_type\":\"T10\",\"team_b_img\":\"https://cricketchampion.co.in/webroot/img/teams/822032673_team.jpg\",\"team_b_short\":\"ZNC\",\"team_b\":\"Zurich Nomads\",\"team_a_short\":\"RCC\",\"fav_team\":\"\",\"team_a\":\"Roma CC\",\"is_hundred\":1,\"series_id\":515,\"series_type\":\"Local\"}', 'ended');
-
 -- --------------------------------------------------------
 
 --
@@ -169,13 +151,6 @@ CREATE TABLE `open_overs` (
   `innings` int(10) NOT NULL,
   `over_number` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `open_overs`
---
-
-INSERT INTO `open_overs` (`s_no`, `match_id`, `innings`, `over_number`) VALUES
-(15, 7683, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -237,15 +212,6 @@ CREATE TABLE `registered_contest` (
   `points` int(100) NOT NULL DEFAULT 0,
   `reg_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `registered_contest`
---
-
-INSERT INTO `registered_contest` (`s_no`, `user_id`, `match_id`, `contest_id`, `entry_fee`, `status`, `points`, `reg_time`) VALUES
-(152, 'dda1a440d0e5463b', 7683, 1, 10, 'ended', 0, '2025-03-21 07:34:21'),
-(153, 'a1b2c3d4e5f67890', 7683, 1, 10, 'ended', 0, '2025-03-21 07:34:21'),
-(154, 'b2c3d4e5f678901a', 7683, 1, 10, 'ended', 0, '2025-03-21 07:34:21');
 
 -- --------------------------------------------------------
 
@@ -407,7 +373,7 @@ ALTER TABLE `user_over_data`
 -- AUTO_INCREMENT for table `contest`
 --
 ALTER TABLE `contest`
-  MODIFY `s_no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=993;
+  MODIFY `s_no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=998;
 
 --
 -- AUTO_INCREMENT for table `deliveries`
@@ -425,7 +391,7 @@ ALTER TABLE `live_match_data`
 -- AUTO_INCREMENT for table `matches`
 --
 ALTER TABLE `matches`
-  MODIFY `s_no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=206;
+  MODIFY `s_no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=207;
 
 --
 -- AUTO_INCREMENT for table `open_overs`
