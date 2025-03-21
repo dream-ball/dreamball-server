@@ -509,11 +509,9 @@ async function update_leaderBoard(match_id) {
         "SELECT * FROM user_over_data WHERE match_id=? AND over_number=?",
         [match_id, overs_to[0].over_number - 1]
     );
-
+    console.log(user_inputs);
     for (const user_data of user_inputs) {
         let points_gained = 0;
-
-        // Runs Calculation
         if (user_data.run) {
             const run_conditions = {
                 "1 - 5": runs >= 1 && runs <= 5,
