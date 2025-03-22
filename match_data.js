@@ -111,6 +111,7 @@ async function upload_overs() {
             return "Match ID not found";
         }
         const matchId = rows[0].reference_id;
+        console.log(matchId);
         const inningsData = overData[match_id];
         let last_stored_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;";
         let [last_stored_over_result] = await db_promise.execute(last_stored_over, [matchId]);
