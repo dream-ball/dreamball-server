@@ -364,7 +364,7 @@ router.get('/api/live/user/rank/:match_is', async (req, res) => {
     }
     return res.json(rank_query)
   } catch (error) {
-    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token",error });
 
   }
 })
