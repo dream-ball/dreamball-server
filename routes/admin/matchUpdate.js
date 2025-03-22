@@ -29,7 +29,10 @@ router.get("/admin/upcomingMatches", adminAuth, (req, res) => {
   }
 });
 function generateMatchId() {
-  return `${Date.now()}}`;
+  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of the timestamp
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0'); // 4-digit random number
+  const combined = `${timestamp}${random}`; // Combine timestamp and random number
+  return combined.slice(0, 10); // Ensure the ID is exactly 10 digits
 }
 router.post("/admin/updateSelectedMatch/:id", adminAuth, async (req, res) => {
   const match_id = Number(req.params.id);
