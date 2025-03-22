@@ -161,7 +161,7 @@ router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
         await db_promise.execute("UPDATE registered_contest SET status='cancelled' WHERE match_id=? AND contest_id=?", [matchId, contest.contest_id]);
 
         const [users] = await db_promise.execute(
-          "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND contest_id=? AND status='live'",
+          "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND contest_id=? AND status='cancelled'",
           [matchId, contest.contest_id]
         );
 
