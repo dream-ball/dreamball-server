@@ -495,6 +495,7 @@ async function run_upload_data() {
 }
 run_upload_data()
 setInterval(async() => {
+    console.log("FetchIng match");
     await run_upload_data()
 }, 10000);
 // async function update_leaderBoard(match_id) {
