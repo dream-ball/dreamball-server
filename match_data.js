@@ -265,24 +265,113 @@ async function getOverData(matchId, innings, overNumber) {
         return null;
     }
 }
-getOverData(769970803, 2, 3).then((data) => {
-    console.log("object");
-    console.log(data);
-    console.log("");
-    console.log("");
-})
-
 async function update_leaderBoard(matchId) {
     let [user_over_data] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?", [matchId]);
+
+    // Object to store total points for each user
+    let userPoints = {};
 
     for (const user_data of user_over_data) {
         console.log(user_data);
 
-        // Assuming user_data has an innings and over_number field
-        let over =await getOverData(user_data.match_id, user_data.innings, user_data.over_number);
+        let over = getOverData(user_data.match_id, user_data.innings, user_data.over_number);
+
+        if (!over || over === 0) {
+            console.log(`No data found for Over ${user_data.over_number}, skipping...`);
+            continue;
+        }
         console.log(over);
+
+        // Initialize points
+        let points_gained = 0;
+
+        let runs = over.total_runs || 0;
+        let four = over.fours || 0;
+        let sixes = over.sixes || 0;
+        let wickets = over.wickets || 0;
+        let dots = over.dot_balls || 0;
+
+        // Runs Prediction
+        if (user_data.run != null) {
+            if (user_data.run === "1 - 5") {
+                points_gained += (runs >= 1 && runs <= 5) ? 1 : -1;
+            } else if (user_data.run === "6 - 10") {
+                points_gained += (runs >= 6 && runs <= 10) ? 1 : -1;
+            } else if (user_data.run === "More than 10") {
+                points_gained += (runs > 10) ? 1 : -1;
+            } else if (user_data.run === "No Runs") {
+                points_gained += (runs === 0) ? 1 : -1;
+            }
+        }
+
+        // Fours Prediction
+        if (user_data.four != null) {
+            if (user_data.four === "1 - 2") {
+                points_gained += (four >= 1 && four <= 2) ? 1 : -1;
+            } else if (user_data.four === "More than 2") {
+                points_gained += (four > 2) ? 1 : -1;
+            } else if (user_data.four === "No Four") {
+                points_gained += (four === 0) ? 1 : -1;
+            }
+        }
+
+        // Sixes Prediction
+        if (user_data.six != null) {
+            if (user_data.six === "1 - 2") {
+                points_gained += (sixes >= 1 && sixes <= 2) ? 1 : -1;
+            } else if (user_data.six === "More than 2") {
+                points_gained += (sixes > 2) ? 1 : -1;
+            } else if (user_data.six === "No Sixes") {
+                points_gained += (sixes === 0) ? 1 : -1;
+            }
+        }
+
+        // Wickets Prediction
+        if (user_data.wicket != null) {
+            if (user_data.wicket === "1") {
+                points_gained += (wickets === 1) ? 1 : -1;
+            } else if (user_data.wicket === "2") {
+                points_gained += (wickets === 2) ? 1 : -1;
+            } else if (user_data.wicket === "More than 2") {
+                points_gained += (wickets > 2) ? 1 : -1;
+            } else if (user_data.wicket === "No Wickets") {
+                points_gained += (wickets === 0) ? 1 : -1;
+            }
+        }
+
+        // Dot Balls Prediction
+        if (user_data.dot != null) {
+            if (user_data.dot === "1 Dot") {
+                points_gained += (dots === 1) ? 1 : -1;
+            } else if (user_data.dot === "2 Dots") {
+                points_gained += (dots === 2) ? 1 : -1;
+            } else if (user_data.dot === "3 Dots") {
+                points_gained += (dots === 3) ? 1 : -1;
+            } else if (user_data.dot === "More than 3") {
+                points_gained += (dots > 3) ? 1 : -1;
+            }
+        }
+
+        console.log(`User ${user_data.user_id} earned ${points_gained} points for Over ${user_data.over_number}`);
+
+        // Accumulate points for the user
+        if (!userPoints[user_data.user_id]) {
+            userPoints[user_data.user_id] = 0;
+        }
+        userPoints[user_data.user_id] += points_gained;
+    }
+
+    // Update the leaderboard in one go for each user
+    for (const user_id in userPoints) {
+        await db_promise.execute(
+            "UPDATE leaderboard SET points = ? WHERE user_id = ? AND match_id = ?",
+            [userPoints[user_id], user_id, matchId]
+        );
+        console.log(`Updated leaderboard: User ${user_id} now has ${userPoints[user_id]} points`);
     }
 }
+
+
 update_leaderBoard(769970803)
 
 
@@ -420,10 +509,6 @@ async function run_upload_data() {
 // }, 10000);
 
 
-
-
-
-
 // async function update_leaderBoard(match_id) {
 //     console.log("Updating the loeaderBoard");
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
@@ -533,7 +618,6 @@ async function run_upload_data() {
 
 //     });
 // }
-
 // async function update_leaderBoard(match_id) {
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
 //     if (!overs_to.length) {
