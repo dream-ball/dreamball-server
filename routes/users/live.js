@@ -372,7 +372,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     if (!rank_query.length) {
     return res.jsom({ error: "Match not found" });
     }
-    return res.json(rank_query,rank_query)
+    return res.json(rank_query,rank_query1)
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
 
