@@ -372,7 +372,8 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'";
     let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
     if (!registered_contest_query.length) {
-      return res.status(400).json({ error: "Match not found" });
+      return res.json([]);
+
     }
     let user_positions = [];
 
@@ -383,7 +384,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
       let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
 
       if (!match_query_result.length) {
-        return res.status(400).json({ error: "Match not found" });
+        return res.json([]);
       }
 
       let [user_position] = await db_promise.execute(
@@ -409,7 +410,8 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     }
 
     if (user_positions.length === 0) {
-      return res.json({ error: "User not found in any contest" });
+      return res.json([]);
+
     }
 
     return res.json(user_positions);
