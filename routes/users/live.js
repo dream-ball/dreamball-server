@@ -130,7 +130,6 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
 
   }
 })
-
 // router.post('/api/submit/users/over_data/', async (req, res) => {
 //   const token = req.header('Authorization')?.replace('Bearer ', '');
 //   try {
@@ -204,7 +203,6 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
 //   }
 // });
 
-
 router.post('/api/submit/users/over_data/', async (req, res) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -231,7 +229,7 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
 
       // Check if user has joined the contest
       const [check_user_joined] = await connection.execute(
-        "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'", 
+        "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'",
         [match_id, decoded_token.userId]
       );
 
@@ -241,7 +239,7 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
       }
 
       const [check_open_over] = await connection.execute(
-        "SELECT * FROM open_overs WHERE match_id=? AND over_number=? AND innings=?", 
+        "SELECT * FROM open_overs WHERE match_id=? AND over_number=? AND innings=?",
         [match_id, over_number, innings]
       );
 
@@ -291,15 +289,12 @@ router.post('/api/submit/users/over_data/', async (req, res) => {
       console.error("Database Error:", error);
       res.status(500).json({ error: "Internal Server Error", details: error.message });
     } finally {
-      connection.release(); 
+      connection.release();
     }
   } catch (err) {
     return res.status(500).json({ status: "Failed", msg: "Server error", error: err.message });
   }
 });
-
-
-
 router.post('/api/user/selected_options/', async (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   const { match_id, over_number, innings } = req.body
@@ -324,7 +319,6 @@ router.post('/api/user/selected_options/', async (req, res) => {
 
   }
 })
-
 router.get('/api/live/user/history/:match_id', async (req, res) => {
   const { match_id } = req.params
   const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -355,6 +349,23 @@ router.get('/api/live/user/history/:match_id', async (req, res) => {
     res.json([user_inputs])
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+  }
+})
+
+router.get('/api/live/user/rank/:match_is', async (req, res) => {
+  const { match_id } = req.params
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  try {
+    let decoded_token=validateJWT(token)
+    let rank = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
+    let [rank_query] = await db_promise.execute(rank, [match_id,decoded_token.userId]);
+    if (!rank_query.length) {
+    return res.jsom({ error: "Match not found" });
+    }
+    return res.json(rank_query)
+  } catch (error) {
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
+
   }
 })
 module.exports = router;

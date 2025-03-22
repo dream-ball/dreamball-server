@@ -372,29 +372,28 @@ async function run_upload_data() {
 // }, 10000);
 
 async function update_leaderBoard(match_id) {
+    console.log("Updating the loeaderBoard");
     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
-    console.log("this the open over",overs_to);
+    console.log("Calculatin Data for over",overs_to[0].over_number-1);
     if (!overs_to.length) {
         console.log("No overs found for the match.");
         return;
     }
     let overs_data;
     if (overs_to[0].innings == 2 && overs_to[0].over_number == 1) {
-        console.log(overs_to[0].innings, (overs_to[0].over_number) - 1)
-        console.log("1");
         const [last_ball] = await db_promise.execute("SELECT MAX(over_number) FROM `overs` WHERE match_id = ? and innings =1", [match_id])
         overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
     }
     else {
-        console.log(overs_to[0].innings, (overs_to[0].over_number) - 1)
-        console.log("2");
+
         overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
     }
-    console.log("This is oves data",overs_data);
+    console.log("Heres the over Data From api");
     if (!overs_data) {
         console.log("Over details not found");
         return;
     }
+    console.log(overs_data);
     let wickets = overs_data.wickets;
     let runs = overs_data.runs;
     let sixes = overs_data.overs.filter(ball => ball === "6").length;
@@ -799,7 +798,6 @@ async function leaderBoard(match_id, contest_id, user_id) {
 }
 async function initiate_prize(match_id) {
     const connection = await db_promise.getConnection(); // Get a connection for transaction
-
     try {
         await connection.beginTransaction(); // Start transaction
 
