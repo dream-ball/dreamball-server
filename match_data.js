@@ -457,6 +457,7 @@ async function update_live_matches() {
 function update_overs() {
     let live_match_query = "SELECT match_id FROM live_match_data WHERE status='live'"
     db.query(live_match_query, async (err, result) => {
+        console.log(result);
         if (err) {
             console.log(err);
         }
@@ -487,7 +488,6 @@ async function run_upload_data() {
     matches_data.map(match => {
         update_leaderBoard(match.match_id)
     })
-
     if (matches_data.length > 0) {
         await update_overs()
         await update_live_matches()
