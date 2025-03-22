@@ -273,15 +273,15 @@ getOverData(769970803, 2, 3).then((data) => {
 })
 
 async function update_leaderBoard(matchId) {
+    let [user_over_data] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?", [matchId]);
 
-    let [user_over_data] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?", [matchId])
-    user_over_data.map(user_data => {
+    for (const user_data of user_over_data) {
         console.log(user_data);
 
-        let over = getOverData(user_data.match_id.user_data.innings.user_data.over_number)
+        // Assuming user_data has an innings and over_number field
+        let over = getOverData(user_data.match_id, user_data.innings, user_data.over_number);
         console.log(over);
-    })
-
+    }
 }
 update_leaderBoard(769970803)
 
