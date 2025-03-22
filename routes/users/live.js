@@ -369,7 +369,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
   try {
     let decoded_token = validateJWT(token);
 
-    let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
+    let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'";
     let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
     if (!registered_contest_query.length) {
       return res.status(400).json({ error: "Match not found" });
@@ -379,7 +379,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     for (let user of registered_contest_query) {
       console.log(`Fetching rank for contest_id: ${user.contest_id}`);
 
-      let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
+      let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=? AND status='live'";
       let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
 
       if (!match_query_result.length) {
