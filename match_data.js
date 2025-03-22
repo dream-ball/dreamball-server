@@ -422,7 +422,7 @@ async function update_leaderBoard(match_id) {
 
     let [user_inputs] = await db_promise.execute(
         "SELECT * FROM user_over_data WHERE match_id=? AND over_number=?",
-        [match_id, (overs_to[0].over_number) - 1]
+        [match_id, (overs_to[0].over_number) - 2]
     );
 
     user_inputs.forEach(async (user_data) => {
