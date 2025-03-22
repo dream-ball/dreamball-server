@@ -10,7 +10,7 @@ router.get('/api/matches', (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
     const decoded_token = validateJWT(token)
-    console.log("Using new updation rules");
+    console.log("Hey Iam new");
 
     const query = "select * from matches ORDER BY s_no";
     db.query(query, (err, result) => {
