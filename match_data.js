@@ -162,7 +162,6 @@ async function upload_overs() {
 }
 async function getOversData(matchId) {
     try {
-
         // Fetch all overs and deliveries in one go
         let getOversQuery = `
             SELECT o.id AS over_id, o.innings, o.over_number, o.bowler, 
@@ -174,7 +173,6 @@ async function getOversData(matchId) {
         `;
 
         let [rows] = await db_promise.execute(getOversQuery, [matchId]);
-
         if (rows.length === 0) {
             return 0;
         }
@@ -331,12 +329,15 @@ async function update_live_matches() {
     }
 }
 function update_overs() {
-    let live_match_query = "SELECT match_id FROM live_match_data"
+    let live_match_query = "SELECT match_id FROM live_match_data WHERE status='live'"
     db.query(live_match_query, async (err, result) => {
         if (err) {
             console.log(err);
         }
         liveMatchIds = []
+        if (!result.length === 0) {
+            return
+        }
         result.map(match => liveMatchIds.push(match.match_id))
         let overs_data = {}
         const fetchOverData = async () => {
@@ -349,9 +350,7 @@ function update_overs() {
                 })
             );
             await writeData("./data/overs_data.json", overs_data);
-
             await upload_overs();
-
         };
         await fetchOverData();
     })
@@ -374,7 +373,7 @@ async function run_upload_data() {
 async function update_leaderBoard(match_id) {
     console.log("Updating the loeaderBoard");
     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
-    console.log("Calculatin Data for over",overs_to[0].over_number-1);
+    console.log("Calculatin Data for over", overs_to[0].over_number - 1);
     if (!overs_to.length) {
         console.log("No overs found for the match.");
         return;
@@ -473,7 +472,7 @@ async function update_leaderBoard(match_id) {
         }
 
 
-        console.log("wickets: "+wickets, "\nruns: "+runs,"\nfour :"+four,"\ndots :"+dots,"\nsixes :"+sixes);
+        console.log("wickets: " + wickets, "\nruns: " + runs, "\nfour :" + four, "\ndots :" + dots, "\nsixes :" + sixes);
         console.log(user_data);
         console.log("user_id: " + user_data.user_id);
         console.log("points_gained: " + points_gained);
@@ -842,18 +841,25 @@ async function initiate_prize(match_id) {
                     }
                 }
 
-                // Execute all updates in parallel
                 if (updatePromises.length > 0) {
                     await Promise.all(updatePromises);
                 }
             }
         }
 
-        // ✅ Update match and contest status after all updates
-        await connection.execute("UPDATE live_match_data SET status='ended' WHERE match_id=?", [match_id]);
+        let matchInfo = await readData('./data/live_match_data.json').data
+        let matchData = matchInfo.filter(match => match.match_id == match_id)
+        if (!matchData.length) {
+            matchData = {
+                status: "Failed",
+                error: "Match details not found while trying to Update end live"
+            }
+        }
+
+        await connection.execute("UPDATE live_match_data SET status='ended' AND match_info=? WHERE match_id=?", [match_id,JSON.stringify(matchData)]);
         await connection.execute("UPDATE contest SET status='ended' WHERE match_id=? AND status='live'", [match_id]);
         await connection.execute("UPDATE registered_contest SET status='ended' WHERE match_id=?", [match_id])
-        await connection.commit(); // Commit transaction if everything is successful
+        await connection.commit();
         return { success: true, message: "Prizes distributed successfully" };
 
     } catch (error) {
@@ -972,4 +978,4 @@ function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformF
     return ({ "prizes_order": groupAndDisplayPrizes(result.prizeDistribution), "prize_pool": result.prizePool });
 }
 
-module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard,prizeOrder,getPrize };
+module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard, prizeOrder, getPrize };
