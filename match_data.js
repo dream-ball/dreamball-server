@@ -254,11 +254,12 @@ async function match_info(match_id) {
             error: "Overs not found"
         }
     }
-
+    console.log(match_id);
     const [rows] = await db_promise.execute(
         "SELECT match_id FROM reference WHERE reference_id=?",
         [match_id]
     );
+    console.log(rows);
 
     if (!rows.length) {
         return ("Match ID not found");

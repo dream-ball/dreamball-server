@@ -7,6 +7,7 @@ const { match_info, prizeOrder, getPrize } = require('../../match_data.js');
 router.get('/api/live_match/:match_id/info/', async (req, res) => {
   let { match_id } = req.params
   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
   try {
     let decoded_token = validateJWT(token);
 
