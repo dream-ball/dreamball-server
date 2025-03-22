@@ -364,11 +364,15 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
   try {
     let decoded_token=validateJWT(token)
     let rank = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
+    let rank1 = "SELECT * FROM registered_contest WHERE match_id=? ";
+    let [rank_query1] = await db_promise.execute(rank1, [match_id]);
+
+
     let [rank_query] = await db_promise.execute(rank, [match_id,decoded_token.userId]);
     if (!rank_query.length) {
     return res.jsom({ error: "Match not found" });
     }
-    return res.json(rank_query)
+    return res.json(rank_query,rank_query)
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
 
