@@ -102,7 +102,7 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
 
     let registered_contest_fetch = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='cancelled' ";
 
-    db.query(registered_contest_fetch, [match_id,decoded_token], async (err, result) => {
+    db.query(registered_contest_fetch, [match_id,decoded_token.userId], async (err, result) => {
       if (err) {
         return res.status(500).json({
           status: "Failed",
