@@ -375,17 +375,12 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
       return res.json([]);
     }
     let user_positions = [];
-
     for (let user of registered_contest_query) {
-      console.log(`Fetching rank for contest_id: ${user.contest_id}`);
-
       let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=? AND status='live'";
       let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
-
       if (!match_query_result.length) {
         return res.json([]);
       }
-
       let [user_position] = await db_promise.execute(
         `SELECT ranked_data.user_id, ud.user_name, ud.user_profile, ranked_data.points, ranked_data.position
         FROM (
@@ -398,16 +393,13 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
         WHERE ranked_data.user_id = ?;`,
         [match_id, user.contest_id, decoded_token.userId]
       );
-
       if (user_position.length > 0) {
         let prizeData = await prizeOrder(match_query_result[0]);
-        console.log(prizeData);
         let user_prize = await getPrize(user_position[0].position, prizeData.prizes_order);
         user_position[0].winnings = user_prize;
         user_positions.push(user_position[0]);
       }
     }
-
     if (user_positions.length === 0) {
       return res.json([]);
 

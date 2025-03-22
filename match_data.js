@@ -222,6 +222,7 @@ async function getOversData(matchId) {
     }
 }
 async function getOverData(matchId, innings, overNumber) {
+    console.log(matchId,innings,overNumber);
     try {
 
         // Query to fetch the specific over and its deliveries
