@@ -476,7 +476,9 @@ function update_overs() {
                     overs_data[ids] = over.data;
                 })
             );
+
             await writeData("./data/overs_data.json", overs_data);
+            console.log(overs_data);
             await upload_overs();
         };
         await fetchOverData();
