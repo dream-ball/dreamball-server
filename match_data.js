@@ -256,13 +256,12 @@ async function match_info(match_id) {
     }
     console.log(match_id);
     const [rows] = await db_promise.execute(
-        "SELECT match_id FROM reference WHERE reference_id=?",
+        "SELECT reference_id FROM reference WHERE match_id=?",
         [match_id]
     );
     console.log(rows);
 
     if (!rows.length) {
-        console.log(match_id);
         return ("Match ID not found");
     }
 
