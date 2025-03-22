@@ -100,17 +100,18 @@ const writeData = (fileName, data) => {
 
 // }
 async function upload_overs() {
+    console.log("upload_overs Called");
     let overData = await readData('./data/overs_data.json');
-
+    console.log(overData);
     for (const match_id in overData) {
         const [rows] = await db_promise.execute(
-            "SELECT reference_id FROM reference WHERE match_id=?",
+            "SELECT match_id FROM reference WHERE reference_id=?",
             [match_id]
         );
         if (!rows.length) {
             return "Match ID not found";
         }
-        const matchId = rows[0].reference_id;
+        const matchId = rows[0].match_id;
         console.log(matchId);
         const inningsData = overData[match_id];
         let last_stored_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;";
@@ -479,7 +480,7 @@ function update_overs() {
             );
 
             await writeData("./data/overs_data.json", overs_data);
-            console.log(JSON.stringify(overs_data));
+            // console.log(JSON.stringify(overs_data));
             await upload_overs();
         };
         await fetchOverData();
