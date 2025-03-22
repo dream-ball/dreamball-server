@@ -128,7 +128,7 @@ router.get('/api/live_match/contest/:match_id', async (req, res) => {
     let contest_query = `SELECT * FROM contest WHERE match_id=? AND contest_id IN (${contest_list.map(() => "?").join(", ")})`;
     let [contest_query_result] = await db_promise.execute(contest_query, [match_id, ...contest_list]);
 
-    return res.json(contest_query_result[0]);
+    return res.json(contest_query_result);
 
   } catch (err) {
     console.error("Error:", err);
