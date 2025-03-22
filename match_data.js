@@ -395,7 +395,8 @@ async function run_upload_data() {
 async function update_leaderBoard(match_id) {
     console.log("Updating the loeaderBoard");
     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
-    console.log("Calculatin Data for over", overs_to[0].over_number - 1);
+    console.log(overs_to);
+    console.log("Calculatin Data for over", overs_to[0].over_number - 2);
     if (!overs_to.length) {
         console.log("No overs found for the match.");
         return;
@@ -406,8 +407,7 @@ async function update_leaderBoard(match_id) {
         overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
     }
     else {
-
-        overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 1);
+        overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) -2);
     }
     console.log("Heres the over Data From api");
     if (!overs_data) {
