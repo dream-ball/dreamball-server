@@ -409,12 +409,11 @@ async function update_leaderBoard(match_id) {
     else {
         overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) -2);
     }
-    console.log("Heres the over Data From api");
+
     if (!overs_data) {
         console.log("Over details not found");
         return;
     }
-    console.log(overs_data);
     let wickets = overs_data.wickets;
     let runs = overs_data.runs;
     let sixes = overs_data.overs.filter(ball => ball === "6").length;

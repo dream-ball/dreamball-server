@@ -81,7 +81,7 @@ router.post("/admin/live/over/:match_id/update", adminAuth, async (req,
       ]);
 
       over_id = result.insertId;
-      console.log("Over data inserted successfully:");
+
     } else {
       // Update existing over data
       const updateQuery = `
@@ -101,7 +101,7 @@ router.post("/admin/live/over/:match_id/update", adminAuth, async (req,
       ]);
 
       over_id = over_data.over_id; // Use the existing over ID
-      console.log("Over data updated successfully:");
+
     }
 
     // Insert or update ball-by-ball data (deliveries)

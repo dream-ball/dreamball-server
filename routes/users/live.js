@@ -318,8 +318,6 @@ router.post('/api/user/selected_options/', async (req, res) => {
       return res.status(404).json({ status: "Failed", msg: "Invalid request" });
     }
     const [options] = await db_promise.execute("SELECT * FROM user_over_data WHERE user_id=? AND match_id=? AND over_number=? AND innings=?", [decoded_token.userId, match_id, over_number, innings])
-    console.log("UserData");
-    console.log(options);
     res.json(options)
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });

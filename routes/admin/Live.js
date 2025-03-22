@@ -82,7 +82,6 @@ router.get('/admin/cancelMatch/:matchId', async (req, res) => {
   if (!Number.isInteger(Number(matchId))) {
     return res.status(400).json({ error: "Invalid match ID" });
   }
-  console.log("Using new updation rules");
   try {
     const updateLiveMatchData = `
       UPDATE live_match_data 
