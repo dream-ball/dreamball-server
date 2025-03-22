@@ -175,8 +175,12 @@ async function upload_overs() {
 }
 
 async function getOversData(matchId) {
+
+    let [user_data]=await db_promise.execute("SELECT * FROM user_data WHERE match_id=?",[matchId])
+    console.log(user_data);
+
+
     try {
-        // Fetch all overs and deliveries in one go
         let getOversQuery = `
             SELECT o.id AS over_id, o.innings, o.over_number, o.bowler, 
                    o.runs, o.score, o.wickets, o.team, d.ball_number, d.outcome
