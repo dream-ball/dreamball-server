@@ -254,8 +254,9 @@ async function match_info(match_id) {
             error: "Overs not found"
         }
     }
+    const [matchId] = db_promise.execute("SELECT match_id FROM refrence WHERE reference_id=?",[match_id])
     let matchInfo = await readData('./data/live_match_data.json').data
-    let matchData = matchInfo.filter(match => match.match_id == match_id)
+    let matchData = matchInfo.filter(match => match.match_id == matchId)
     if (!matchData.length) {
         matchData = {
             status: "Failed",
@@ -318,7 +319,6 @@ const options = {
     }
 };
 async function update_live_matches() {
-
     const url_for_live = 'https://cricket-live-line1.p.rapidapi.com/liveMatches';
     try {
         const live_result = await fetch(url_for_live, options);

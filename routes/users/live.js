@@ -371,11 +371,9 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
 
     let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
     let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
-
     if (!registered_contest_query.length) {
-      return res.json({ error: "Match not found" });
+      return res.status(400).json({ error: "Match not found" });
     }
-
     let user_positions = [];
 
     for (let user of registered_contest_query) {
@@ -385,7 +383,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
       let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
 
       if (!match_query_result.length) {
-        return res.json({ error: "Match not found" });
+        return res.status(400).json({ error: "Match not found" });
       }
 
       let [user_position] = await db_promise.execute(
@@ -404,7 +402,6 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
       if (user_position.length > 0) {
         let prizeData = await prizeOrder(match_query_result[0]);
         let user_prize = await getPrize(user_position[0].position, prizeData.prizes_order);
-
         user_position[0].winnings = user_prize;
         user_positions.push(user_position[0]);
       }
@@ -416,7 +413,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
 
     return res.json(user_positions);
   } catch (error) {
-    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token", error });
+    return res.status(401).json({ status: "Failed", error: "Invalid or expired token", error });
   }
 });
 

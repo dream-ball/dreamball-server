@@ -6,8 +6,6 @@ function generateJWT(userID) {
   if (!secret_token) {
     throw new Error("JWT secret key is not set in environment variables.");
   }
-  
-
   const token = jwt.sign({ userId: userID }, secret_token, { expiresIn: '30h' });
   return token;
 }
