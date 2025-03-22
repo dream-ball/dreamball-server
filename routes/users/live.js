@@ -401,6 +401,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
 
       if (user_position.length > 0) {
         let prizeData = await prizeOrder(match_query_result[0]);
+        console.log(prizeData);
         let user_prize = await getPrize(user_position[0].position, prizeData.prizes_order);
         user_position[0].winnings = user_prize;
         user_positions.push(user_position[0]);
