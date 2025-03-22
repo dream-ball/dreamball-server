@@ -357,102 +357,33 @@ router.get('/api/live/user/history/:match_id', async (req, res) => {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
   }
 })
-// router.get('/api/live/user/rank/:match_id', async (req, res) => {
-//   const { match_id } = req.params;
-
-//   if (!Number.isInteger(Number(match_id))) {
-//     return res.status(400).json({ error: "Invalid match ID" });
-//   }
-
-//   const token = req.header('Authorization')?.replace('Bearer ', '');
-
-//   try {
-//     let decoded_token = validateJWT(token);
-
-//     let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'";
-//     let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
-//     if (!registered_contest_query.length) {
-//       return res.json([]);
-
-//     }
-//     let user_positions = [];
-
-//     for (let user of registered_contest_query) {
-//       console.log(`Fetching rank for contest_id: ${user.contest_id}`);
-
-//       let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=? AND status='live'";
-//       let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
-
-//       if (!match_query_result.length) {
-//         return res.json([]);
-//       }
-
-//       let [user_position] = await db_promise.execute(
-//         `SELECT ranked_data.user_id, ud.user_name, ud.user_profile, ranked_data.points, ranked_data.position
-//         FROM (
-//             SELECT user_id, points, 
-//             RANK() OVER(ORDER BY points DESC) AS position
-//             FROM registered_contest
-//             WHERE match_id = ? AND contest_id=?
-//         ) AS ranked_data
-//         JOIN user_details ud ON ranked_data.user_id = ud.user_id 
-//         WHERE ranked_data.user_id = ?;`,
-//         [match_id, user.contest_id, decoded_token.userId]
-//       );
-
-//       if (user_position.length > 0) {
-//         let prizeData = await prizeOrder(match_query_result[0]);
-//         console.log(prizeData);
-//         let user_prize = await getPrize(user_position[0].position, prizeData.prizes_order);
-//         user_position[0].winnings = user_prize;
-//         user_positions.push(user_position[0]);
-//       }
-//     }
-
-//     if (user_positions.length === 0) {
-//       return res.json([]);
-
-//     }
-
-//     return res.json(user_positions);
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(401).json({ status: "Failed", error: "Invalid or expired token", error });
-//   }
-// });
-
 router.get('/api/live/user/rank/:match_id', async (req, res) => {
   const { match_id } = req.params;
 
-  // Proper validation for match_id (must be a positive integer)
-  if (!/^\d+$/.test(match_id)) {
+  if (!Number.isInteger(Number(match_id))) {
     return res.status(400).json({ error: "Invalid match ID" });
   }
 
   const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) {
-    return res.status(401).json({ status: "Failed", error: "Missing authorization token" });
-  }
-
   try {
     let decoded_token = validateJWT(token);
-    let registered_contest = `SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'`;
+
+    let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'";
     let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
-
     if (!registered_contest_query.length) {
-      return res.json([]);
+      console.log("rehisteration not found");
+      return res.json([[]]);
     }
-
     let user_positions = [];
 
     for (let user of registered_contest_query) {
       console.log(`Fetching rank for contest_id: ${user.contest_id}`);
 
-      let match_query = `SELECT * FROM contest WHERE match_id=? AND contest_id=? AND status='live'`;
+      let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=? AND status='live'";
       let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
 
       if (!match_query_result.length) {
-        continue; // Instead of returning early, continue to the next contest
+        return res.json([]);
       }
 
       let [user_position] = await db_promise.execute(
@@ -477,10 +408,15 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
       }
     }
 
-    return res.json(user_positions.length ? user_positions : []);
+    if (user_positions.length === 0) {
+      return res.json([]);
+
+    }
+
+    return res.json(user_positions);
   } catch (error) {
-    console.error(error);
-    return res.status(401).json({ status: "Failed", error: "Invalid or expired token" });
+    console.log(error);
+    return res.status(401).json({ status: "Failed", error: "Invalid or expired token", error });
   }
 });
 
