@@ -371,8 +371,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live'";
     let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
     if (!registered_contest_query.length) {
-      console.log("rehisteration not found");
-      return res.json([[]]);
+      return res.json([]);
     }
     let user_positions = [];
 
