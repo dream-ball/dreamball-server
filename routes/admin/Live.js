@@ -42,7 +42,7 @@ router.get("/admin/getLiveMatches", adminAuth, (req, res) => {
 //   }
 // });
 
-router.get('/admin/cancelMatch/:matchId', adminAuth, async (req, res) => {
+router.get('/admin/cancelMatch/:matchId', async (req, res) => {
   let { matchId } = req.params;
 
   try {
