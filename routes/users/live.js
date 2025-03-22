@@ -102,7 +102,7 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
 
     let registered_contest_fetch = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='cancelled' ";
 
-    db.query(registered_contest_fetch, [match_id,decoded_token.userId], async (err, result) => {
+    db.query(registered_contest_fetch, [match_id, decoded_token.userId], async (err, result) => {
       if (err) {
         return res.status(500).json({
           status: "Failed",
@@ -123,7 +123,7 @@ router.get('/api/live_match/contest/:match_id', (req, res) => {
       let contest_query = `SELECT * FROM contest WHERE match_id=? and contest_id IN (${conetsIds})`;
       let contest_query_result = await db_promise.execute(contest_query, [match_id])
 
-      return res.json(contest_query_result[0])
+      return res.json({ contest_query_result , result, contest_list })
     })
   } catch (err) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
@@ -362,19 +362,19 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
   }
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
-    let decoded_token=validateJWT(token)
+    let decoded_token = validateJWT(token)
     let rank = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
     let rank1 = "SELECT * FROM registered_contest WHERE match_id=? ";
     let [rank_query1] = await db_promise.execute(rank1, [match_id]);
 
 
-    let [rank_query] = await db_promise.execute(rank, [match_id,decoded_token.userId]);
+    let [rank_query] = await db_promise.execute(rank, [match_id, decoded_token.userId]);
     if (!rank_query.length) {
-    return res.json({ error: "Match not found" });
+      return res.json({ error: "Match not found" });
     }
-    return res.json({rank_query,rank_query1})
+    return res.json({ rank_query, rank_query1 })
   } catch (error) {
-    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" ,error});
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token", error });
 
   }
 })
