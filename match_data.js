@@ -221,10 +221,11 @@ async function getOversData(matchId) {
         return 0;
     }
 }
-
-console.log(getOversData("0769970803"))
+getOversData("0769970803").then((data) => {
+    console.log(data);
+});
 async function getOverData(matchId, innings, overNumber) {
-    console.log(matchId,innings,overNumber);
+    console.log(matchId, innings, overNumber);
     try {
 
         // Query to fetch the specific over and its deliveries
@@ -409,7 +410,7 @@ async function update_leaderBoard(match_id) {
         overs_data = await getOverData(match_id, overs_to[0].innings - 1, last_ball[0]["MAX(over_number)"]);
     }
     else {
-        overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) -2);
+        overs_data = await getOverData(match_id, overs_to[0].innings, (overs_to[0].over_number) - 2);
     }
 
     if (!overs_data) {
@@ -854,7 +855,7 @@ async function initiate_prize(match_id) {
 
                 for (let user of user_query) {
                     let user_prize = getPrize(user.position, prizeData.prizes_order);
-                    if (user_prize !== 0){
+                    if (user_prize !== 0) {
                         updatePromises.push(
                             connection.execute(
                                 "UPDATE user_details SET funds = funds + ? WHERE user_id = ?",
