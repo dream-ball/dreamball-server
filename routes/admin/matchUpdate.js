@@ -34,7 +34,7 @@ function generateMatchId() {
   const combined = `${timestamp}${random}`; // Combine timestamp and random number
   return combined.slice(0, 10); // Ensure the ID is exactly 10 digits
 }
-router.post("/admin/updateSelectedMatch/:id", adminAuth, async (req, res) => {
+router.post("/admin/updateSelectedMatch/:id", async (req, res) => {
   const match_id = Number(req.params.id);
   let default_contest = read_default_contest();
   let matchId = generateMatchId();
