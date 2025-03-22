@@ -268,7 +268,6 @@ async function update_leaderBoard(matchId) {
     let [user_over_data] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?", [matchId]);
     let userPoints = {};
     for (const user_data of user_over_data) {
-        console.log(user_data);
 
         let over = await getOverData(user_data.match_id, user_data.innings, user_data.over_number);
 
@@ -276,7 +275,6 @@ async function update_leaderBoard(matchId) {
             console.log(`No data found for Over ${user_data.over_number}, skipping...`);
             continue;
         }
-        console.log(over);
 
         // Initialize points
         let points_gained = 0;
@@ -366,7 +364,6 @@ async function update_leaderBoard(matchId) {
     }
 }
 
-update_leaderBoard(769970803)
 async function match_info(match_id) {
     let data = {}
     let oversData = await getOversData(match_id);
@@ -392,45 +389,45 @@ async function match_info(match_id) {
             error: "Match details not found"
         }
     }
-    else {
-        let [team_a_score] = await db_promise.execute(
-            "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
-            [match_id, matchData[0].team_a_short]
-        );
+    // else {
+    //     let [team_a_score] = await db_promise.execute(
+    //         "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
+    //         [match_id, matchData[0].team_a_short]
+    //     );
 
-        if (team_a_score.length) {
-            matchData[0].team_a_scores = team_a_score[0].score;
+    //     if (team_a_score.length) {
+    //         matchData[0].team_a_scores = team_a_score[0].score;
 
-            let [overs_count] = await db_promise.execute(
-                "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
-                [team_a_score[0].id]
-            );
+    //         let [overs_count] = await db_promise.execute(
+    //             "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
+    //             [team_a_score[0].id]
+    //         );
 
-            matchData[0].team_a_over = `${team_a_score[0].over_number - 1}.${overs_count[0]['COUNT(*)']}`;
-        } else {
-            matchData[0].team_a_scores = "0-0";
-            matchData[0].team_a_over = "0.0";
-        }
+    //         matchData[0].team_a_over = `${team_a_score[0].over_number - 1}.${overs_count[0]['COUNT(*)']}`;
+    //     } else {
+    //         matchData[0].team_a_scores = "0-0";
+    //         matchData[0].team_a_over = "0.0";
+    //     }
 
-        let [team_b_score] = await db_promise.execute(
-            "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
-            [match_id, matchData[0].team_b_short]
-        );
+    //     let [team_b_score] = await db_promise.execute(
+    //         "SELECT * FROM overs WHERE match_id = ? AND team = ? ORDER BY innings DESC, over_number DESC LIMIT 1",
+    //         [match_id, matchData[0].team_b_short]
+    //     );
 
-        if (team_b_score.length) {
-            matchData[0].team_b_scores = team_b_score[0].score;
+    //     if (team_b_score.length) {
+    //         matchData[0].team_b_scores = team_b_score[0].score;
 
-            let [overs_count] = await db_promise.execute(
-                "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
-                [team_b_score[0].id]
-            );
+    //         let [overs_count] = await db_promise.execute(
+    //             "SELECT COUNT(*) FROM deliveries WHERE over_id = ?",
+    //             [team_b_score[0].id]
+    //         );
 
-            matchData[0].team_b_over = `${team_b_score[0].over_number - 1}.${overs_count[0]['COUNT(*)']}`;
-        } else {
-            matchData[0].team_b_scores = "0-0";
-            matchData[0].team_b_over = "0.0";
-        }
-    }
+    //         matchData[0].team_b_over = `${team_b_score[0].over_number - 1}.${overs_count[0]['COUNT(*)']}`;
+    //     } else {
+    //         matchData[0].team_b_scores = "0-0";
+    //         matchData[0].team_b_over = "0.0";
+    //     }
+    // }
     let [open_over] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id])
     if (!open_over.length) {
         return 0
@@ -496,10 +493,10 @@ async function run_upload_data() {
         await update_live_matches()
     }
 }
-// run_upload_data()
-// setInterval(async() => {
-//     await run_upload_data()
-// }, 10000);
+run_upload_data()
+setInterval(async() => {
+    await run_upload_data()
+}, 10000);
 // async function update_leaderBoard(match_id) {
 //     console.log("Updating the loeaderBoard");
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
