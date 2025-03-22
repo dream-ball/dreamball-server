@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { db, db_promise } = require("../../database/db.js");
-const { match_info, getOverData, update_leaderBoard, finals_leaderBoard } = require('../../match_data.js');
+const { match_info, getOverData, update_leaderBoard, finals_leaderBoard,initiate_prize } = require('../../match_data.js');
 const adminAuth = require("../../middleware/adminAuth.js");
 router.get('/admin/live_match/:match_id/info/', adminAuth, async (req, res) => {
   let { match_id } = req.params
@@ -162,12 +162,12 @@ router.post("/admin/switch_innings/:match_id", adminAuth, (req, res) => {
   });
 })
 
-router.post("/admin/end-match/:match_id",adminAuth,async (req, res) => {
+router.post("/admin/end-match/:match_id", adminAuth, async (req, res) => {
   try {
     const { match_id } = req.params;
 
-
-    finals_leaderBoard(match_id)
+    initiate_prize(match_id)
+    const [end_open_over] = await db_promise.execute("DELETE FROM open_overs WHERE match_id=?", [match_id])
     res.json({ msg: "match Ended" });
   } catch (error) {
     res.status(400).json({ error: "An error oocured" });

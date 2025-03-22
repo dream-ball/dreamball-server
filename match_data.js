@@ -501,7 +501,7 @@ run_upload_data()
 setInterval(async() => {
     console.log("FetchIng match");
     await run_upload_data()
-}, 15000);
+}, 20000);
 // async function update_leaderBoard(match_id) {
 //     console.log("Updating the loeaderBoard");
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);
