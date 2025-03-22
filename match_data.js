@@ -473,7 +473,7 @@ function update_overs() {
                     const url_for_overs = `https://cricket-live-line1.p.rapidapi.com/match/${"7317"}/overHistory`;
                     const over_result = await fetch(url_for_overs, options);
                     const over = await over_result.json();
-                    overs_data[824933441] = over.data;
+                    overs_data["7317"] = over.data;
                 })
             );
 
