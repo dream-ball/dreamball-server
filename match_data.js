@@ -176,7 +176,7 @@ async function upload_overs() {
 
 async function getOversData(matchId) {
 
-    let [user_data]=await db_promise.execute("SELECT * FROM user_data WHERE match_id=?",[matchId])
+    let [user_data]=await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?",[matchId])
     console.log(user_data);
 
 
