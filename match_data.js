@@ -270,7 +270,7 @@ async function update_leaderBoard(matchId) {
     for (const user_data of user_over_data) {
         console.log(user_data);
 
-        let over =await getOverData(user_data.match_id, user_data.innings, user_data.over_number);
+        let over = await getOverData(user_data.match_id, user_data.innings, user_data.over_number);
 
         if (!over || over === 0) {
             console.log(`No data found for Over ${user_data.over_number}, skipping...`);
@@ -280,12 +280,11 @@ async function update_leaderBoard(matchId) {
 
         // Initialize points
         let points_gained = 0;
-
-        let runs = over.total_runs || 0;
-        let four = over.fours || 0;
-        let sixes = over.sixes || 0;
-        let wickets = over.wickets || 0;
-        let dots = over.dot_balls || 0;
+        let wickets = overs_data.wickets;
+        let runs = overs_data.runs;
+        let sixes = overs_data.overs.filter(ball => ball === "6").length;
+        let four = overs_data.overs.filter(ball => ball === "4").length;
+        let dots = overs_data.overs.filter(ball => ball === "0").length;
 
         // Runs Prediction
         if (user_data.run != null) {
@@ -488,7 +487,7 @@ function update_overs() {
 }
 async function run_upload_data() {
     const [matches_data] = await db_promise.execute("SELECT * FROM live_match_data WHERE status='live'")
-    matches_data.map(match=>{
+    matches_data.map(match => {
         update_leaderBoard(match.match_id)
     })
 
