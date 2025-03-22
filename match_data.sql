@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 22, 2025 at 05:58 AM
+-- Generation Time: Mar 22, 2025 at 06:27 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `contest` (
   `s_no` int(11) NOT NULL,
-  `match_id` int(50) NOT NULL,
+  `match_id` bigint(20) NOT NULL,
   `contest_id` varchar(255) NOT NULL,
   `prize_pool` int(255) NOT NULL,
   `entry_fee` int(255) NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE `contest` (
 
 CREATE TABLE `deliveries` (
   `id` int(11) NOT NULL,
-  `over_id` int(11) NOT NULL,
+  `over_id` int(255) NOT NULL,
   `ball_number` int(11) NOT NULL,
   `outcome` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -64,7 +64,7 @@ CREATE TABLE `deliveries` (
 
 CREATE TABLE `live_match_data` (
   `s_no` int(20) NOT NULL,
-  `match_id` int(50) NOT NULL,
+  `match_id` bigint(20) NOT NULL,
   `match_time` varchar(55) NOT NULL,
   `date_wise` varchar(55) NOT NULL,
   `live_time` datetime NOT NULL DEFAULT current_timestamp(),
@@ -81,7 +81,7 @@ CREATE TABLE `live_match_data` (
 
 CREATE TABLE `matches` (
   `s_no` int(11) NOT NULL,
-  `match_id` int(50) NOT NULL,
+  `match_id` bigint(20) NOT NULL,
   `match_time` varchar(55) NOT NULL,
   `date_wise` varchar(55) NOT NULL,
   `match_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`match_data`))
@@ -95,7 +95,7 @@ CREATE TABLE `matches` (
 
 CREATE TABLE `open_overs` (
   `s_no` int(255) NOT NULL,
-  `match_id` int(50) NOT NULL,
+  `match_id` bigint(20) NOT NULL,
   `innings` int(10) NOT NULL,
   `over_number` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -133,8 +133,8 @@ INSERT INTO `orders` (`id`, `user_id`, `order_id`, `amount`, `currency`, `receip
 --
 
 CREATE TABLE `overs` (
-  `id` int(11) NOT NULL,
-  `match_id` int(50) DEFAULT NULL,
+  `id` int(255) NOT NULL,
+  `match_id` bigint(20) DEFAULT NULL,
   `innings` int(20) NOT NULL,
   `over_number` int(11) NOT NULL,
   `bowler` varchar(100) NOT NULL,
@@ -152,8 +152,8 @@ CREATE TABLE `overs` (
 
 CREATE TABLE `reference` (
   `s_no` int(11) NOT NULL,
-  `match_id` int(50) NOT NULL,
-  `referecne_id` int(50) NOT NULL
+  `match_id` bigint(20) DEFAULT NULL,
+  `reference_id` int(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -165,7 +165,7 @@ CREATE TABLE `reference` (
 CREATE TABLE `registered_contest` (
   `s_no` int(11) NOT NULL,
   `user_id` varchar(255) NOT NULL,
-  `match_id` int(50) NOT NULL,
+  `match_id` bigint(20) NOT NULL,
   `contest_id` int(255) NOT NULL,
   `entry_fee` int(255) NOT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'upcoming',
@@ -237,7 +237,7 @@ CREATE TABLE `user_kyc` (
 CREATE TABLE `user_over_data` (
   `s_no` int(11) NOT NULL,
   `user_id` varchar(255) NOT NULL,
-  `match_id` int(50) NOT NULL,
+  `match_id` bigint(20) NOT NULL,
   `innings` int(10) NOT NULL,
   `over_number` int(12) NOT NULL,
   `run` varchar(50) DEFAULT NULL,
@@ -302,7 +302,7 @@ ALTER TABLE `overs`
 --
 ALTER TABLE `reference`
   ADD PRIMARY KEY (`s_no`),
-  ADD UNIQUE KEY `referecne_id` (`referecne_id`);
+  ADD UNIQUE KEY `referecne_id` (`reference_id`);
 
 --
 -- Indexes for table `registered_contest`
@@ -376,7 +376,7 @@ ALTER TABLE `orders`
 -- AUTO_INCREMENT for table `overs`
 --
 ALTER TABLE `overs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5795;
+  MODIFY `id` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5795;
 
 --
 -- AUTO_INCREMENT for table `reference`
