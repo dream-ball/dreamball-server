@@ -10,7 +10,7 @@ router.get('/api/matches', (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
     const decoded_token = validateJWT(token)
-    console.log("Hey Iam new");
+    console.log("Hey Iam new world");
 
     const query = "select * from matches ORDER BY s_no";
     db.query(query, (err, result) => {
