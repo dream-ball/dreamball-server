@@ -42,19 +42,74 @@ router.get("/admin/getLiveMatches", adminAuth, (req, res) => {
 //   }
 // });
 
+// router.get('/admin/cancelMatch/:matchId', async (req, res) => {
+//   let { matchId } = req.params;
+//   try {
+//     const deleteLiveMatchData = `UPDATE live_match_data SET status='ended' WHERE match_id = ?`;
+//     const revertLiveStatusRegisteredContest = `UPDATE registered_contest SET status = 'ended' WHERE match_id = ?`;
+//     const revertLiveStatusContest = `UPDATE contest SET status ='ended' WHERE match_id = ?`;
+//     console.log(`Initiating refund for match ${matchId}...`);
+
+//     // Fetch users who joined the contest
+//     const [users] = await db_promise.execute(
+//       "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND status='live'",
+//       [matchId]
+//     );
+//     for (const user of users) {
+//       await db_promise.execute(
+//         "UPDATE user_details SET deposits = deposits + ? WHERE user_id = ?",
+//         [user.entry_fee, user.user_id]
+//       );
+//     }
+
+//     console.log(`Canceling match ${matchId}...`);
+//     await db_promise.execute(deleteLiveMatchData, [matchId]);
+//     await db_promise.execute(revertLiveStatusRegisteredContest, [matchId]);
+//     await db_promise.execute(revertLiveStatusContest, [matchId]);
+
+//     res.status(200).send({ status: 'Match cancelled successfully!' });
+//   } catch (error) {
+//     console.error('Error cancelling match:', error.message);
+//     res.status(500).send({ status: 'Internal server error' });
+//   }
+// });
+
+
 router.get('/admin/cancelMatch/:matchId', async (req, res) => {
-  let { matchId } = req.params;
+  const { matchId } = req.params;
+
+  // Validate matchId
+  if (!Number.isInteger(Number(matchId))) {
+    return res.status(400).json({ error: "Invalid match ID" });
+  }
+  console.log("Using new updation rules");
   try {
-    const deleteLiveMatchData = `UPDATE live_match_data SET status='ended' WHERE match_id = ?`;
-    const revertLiveStatusRegisteredContest = `UPDATE registered_contest SET status = 'ended' WHERE match_id = ?`;
-    const revertLiveStatusContest = `UPDATE contest SET status ='ended' WHERE match_id = ?`;
+    // SQL Queries
+    const updateLiveMatchData = `
+      UPDATE live_match_data 
+      SET status = 'ended' 
+      WHERE match_id = ?
+    `;
+    const updateRegisteredContestStatus = `
+      UPDATE registered_contest 
+      SET status = 'ended' 
+      WHERE match_id = ?
+    `;
+    const updateContestStatus = `
+      UPDATE contest 
+      SET status = 'ended' 
+      WHERE match_id = ?
+    `;
+
     console.log(`Initiating refund for match ${matchId}...`);
 
     // Fetch users who joined the contest
     const [users] = await db_promise.execute(
-      "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND status='live'",
+      "SELECT user_id, entry_fee FROM registered_contest WHERE match_id = ? AND status = 'live'",
       [matchId]
     );
+
+    // Refund entry fees to users
     for (const user of users) {
       await db_promise.execute(
         "UPDATE user_details SET deposits = deposits + ? WHERE user_id = ?",
@@ -63,17 +118,18 @@ router.get('/admin/cancelMatch/:matchId', async (req, res) => {
     }
 
     console.log(`Canceling match ${matchId}...`);
-    await db_promise.execute(deleteLiveMatchData, [matchId]);
-    await db_promise.execute(revertLiveStatusRegisteredContest, [matchId]);
-    await db_promise.execute(revertLiveStatusContest, [matchId]);
 
-    res.status(200).send({ status: 'Match cancelled successfully!' });
+    // Update match and contest statuses
+    await db_promise.execute(updateLiveMatchData, [matchId]);
+    await db_promise.execute(updateRegisteredContestStatus, [matchId]);
+    await db_promise.execute(updateContestStatus, [matchId]);
+
+    res.status(200).json({ status: 'Match cancelled successfully!' });
   } catch (error) {
     console.error('Error cancelling match:', error.message);
-    res.status(500).send({ status: 'Internal server error' });
+    res.status(500).json({ status: 'Internal server error', error: error.message });
   }
 });
-
 module.exports = router;
 
 
