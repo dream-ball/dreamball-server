@@ -94,42 +94,48 @@ router.get('/api/live_match/:match_id', async (req, res) => {
 
   }
 })
-router.get('/api/live_match/contest/:match_id', (req, res) => {
+router.get('/api/live_match/contest/:match_id', async (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
-  let { match_id } = req.params
+  let { match_id } = req.params;
+
+  if (!Number.isInteger(Number(match_id))) {
+    return res.status(400).json({ status: "Failed", msg: "Invalid match ID" });
+  }
+
   try {
     let decoded_token = validateJWT(token);
 
-    let registered_contest_fetch = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=? AND status='live' OR status='cancelled' ";
+    let registered_contest_fetch = `
+      SELECT * FROM registered_contest 
+      WHERE match_id=? AND user_id=? AND (status='live' OR status='cancelled')
+    `;
 
-    db.query(registered_contest_fetch, [match_id, decoded_token.userId], async (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          status: "Failed",
-          msg: "Connection error"
-        })
-      }
-      if (!result.length) {
-        return res.status(404).json({
-          status: "Failed",
-          msg: "Match data not found"
-        })
-      }
-      let contest_list = new Set();
-      result.map(contest => contest_list.add(contest.contest_id))
-      let conetsIds = [...contest_list].join(", ");
+    let [result] = await db_promise.execute(registered_contest_fetch, [match_id, decoded_token.userId]);
 
+    if (!result.length) {
+      return res.status(404).json({
+        status: "Failed",
+        msg: "Match data not found"
+      });
+    }
 
-      let contest_query = `SELECT * FROM contest WHERE match_id=? and contest_id IN (${conetsIds})`;
-      let contest_query_result = await db_promise.execute(contest_query, [match_id])
+    let contest_list = [...new Set(result.map(contest => contest.contest_id))];
 
-      return res.json({ contest_query_result , result, contest_list })
-    })
+    if (contest_list.length === 0) {
+      return res.json({ contest_query_result: [], result, contest_list });
+    }
+
+    let contest_query = `SELECT * FROM contest WHERE match_id=? AND contest_id IN (${contest_list.map(() => "?").join(", ")})`;
+    let [contest_query_result] = await db_promise.execute(contest_query, [match_id, ...contest_list]);
+
+    return res.json({ contest_query_result, result, contest_list });
+
   } catch (err) {
+    console.error("Error:", err);
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
-
   }
-})
+});
+
 // router.post('/api/submit/users/over_data/', async (req, res) => {
 //   const token = req.header('Authorization')?.replace('Bearer ', '');
 //   try {
