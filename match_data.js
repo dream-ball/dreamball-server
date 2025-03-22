@@ -262,6 +262,7 @@ async function match_info(match_id) {
     console.log(rows);
 
     if (!rows.length) {
+        console.log(match_id);
         return ("Match ID not found");
     }
 
