@@ -370,9 +370,9 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
 
     let [rank_query] = await db_promise.execute(rank, [match_id,decoded_token.userId]);
     if (!rank_query.length) {
-    return res.jsom({ error: "Match not found" });
+    return res.json({ error: "Match not found" });
     }
-    return res.json(rank_query,rank_query1)
+    return res.json({rank_query,rank_query1})
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" ,error});
 
