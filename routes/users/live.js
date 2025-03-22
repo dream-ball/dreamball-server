@@ -377,9 +377,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     }
 
     for (let user of registered_contest_query) {
-      
-
-
+      console.log(user);
       let [user_position] = await db_promise.execute(
         `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
         FROM (
@@ -397,9 +395,6 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
       }
 
     }
-
-
-
 
     return res.json(rank_query)
   } catch (error) {
