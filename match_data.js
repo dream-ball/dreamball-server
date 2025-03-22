@@ -455,9 +455,9 @@ async function update_live_matches() {
     }
 }
 function update_overs() {
-    let live_match_query = "SELECT match_id FROM live_match_data WHERE status='live'"
-    db.query(live_match_query, async (err, result) => {
-        console.log(result);
+    let live_match_query = "SELECT match_id FROM reference WHERE match_id=?"
+    db.query(live_match_query, ["0824933441"],async (err, result) => {
+        
         if (err) {
             console.log(err);
         }
