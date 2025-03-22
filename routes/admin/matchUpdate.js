@@ -29,7 +29,7 @@ router.get("/admin/upcomingMatches", adminAuth, (req, res) => {
   }
 });
 function generateMatchId() {
-  return `${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+  return `${Date.now()}${Math.floor(1000)}`;
 }
 router.post("/admin/updateSelectedMatch/:id", adminAuth, async (req, res) => {
   const match_id = Number(req.params.id);
