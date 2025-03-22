@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { validateJWT } = require('../../utils/jwt_users.js')
 const { db, db_promise } = require('../../database/db.js');
-const { match_info } = require('../../match_data.js');
+const { match_info, prizeOrder, getPrize } = require('../../match_data.js');
 
 router.get('/api/live_match/:match_id/info/', async (req, res) => {
   let { match_id } = req.params
@@ -357,7 +357,6 @@ router.get('/api/live/user/history/:match_id', async (req, res) => {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
   }
 })
-
 router.get('/api/live/user/rank/:match_id', async (req, res) => {
   const { match_id } = req.params;
 
@@ -366,6 +365,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
   }
 
   const token = req.header('Authorization')?.replace('Bearer ', '');
+
   try {
     let decoded_token = validateJWT(token);
 
@@ -381,6 +381,13 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     for (let user of registered_contest_query) {
       console.log(`Fetching rank for contest_id: ${user.contest_id}`);
 
+      let match_query = "SELECT * FROM contest WHERE match_id=? AND contest_id=?";
+      let [match_query_result] = await db_promise.execute(match_query, [match_id, user.contest_id]);
+
+      if (!match_query_result.length) {
+        return res.json({ error: "Match not found" });
+      }
+
       let [user_position] = await db_promise.execute(
         `SELECT ranked_data.user_id, ud.user_name, ud.user_profile, ranked_data.points, ranked_data.position
         FROM (
@@ -394,9 +401,11 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
         [match_id, user.contest_id, decoded_token.userId]
       );
 
-      console.log(user_position);
-
       if (user_position.length > 0) {
+        let prizeData = await prizeOrder(match_query_result[0]);
+        let user_prize = await getPrize(user_position[0].position, prizeData.prizes_order);
+
+        user_position[0].winnings = user_prize;
         user_positions.push(user_position[0]);
       }
     }
@@ -410,5 +419,6 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token", error });
   }
 });
+
 
 module.exports = router;

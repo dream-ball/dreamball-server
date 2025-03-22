@@ -972,4 +972,4 @@ function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformF
     return ({ "prizes_order": groupAndDisplayPrizes(result.prizeDistribution), "prize_pool": result.prizePool });
 }
 
-module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard };
+module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard,prizeOrder,getPrize };
