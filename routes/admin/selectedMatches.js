@@ -134,6 +134,7 @@ router.post('/admin/extendMatch/:id', adminAuth, async (req, res) => {
 
 router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
   const matchId = parseInt(req.params.id);
+  console.log(matchId);
   const connection = await db_promise.getConnection();
 
   try {
@@ -141,7 +142,7 @@ router.post("/admin/makeLive/:id", adminAuth, async (req, res) => {
 
     const checkMatchQuery = `SELECT * FROM matches WHERE match_id=?`;
     const [ress] = await connection.execute(checkMatchQuery, [matchId]);
-
+    console.log(ress);
     if (ress.length === 0) {
       await connection.rollback(); // Rollback if match not found
       return res.status(404).json({ status: "Match not found" });
