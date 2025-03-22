@@ -84,7 +84,6 @@ router.get('/admin/cancelMatch/:matchId', async (req, res) => {
   }
   console.log("Using new updation rules");
   try {
-    // SQL Queries
     const updateLiveMatchData = `
       UPDATE live_match_data 
       SET status = 'ended' 
