@@ -369,12 +369,34 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
     let decoded_token = validateJWT(token)
-    let rank = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
+    let registered_contest = "SELECT * FROM registered_contest WHERE match_id=? AND user_id=?";
 
-    let [rank_query] = await db_promise.execute(rank, [match_id, decoded_token.userId]);
-    if (!rank_query.length) {
+    let [registered_contest_query] = await db_promise.execute(registered_contest, [match_id, decoded_token.userId]);
+    if (!registered_contest_query.length) {
       return res.json({ error: "Match not found" });
     }
+
+    for (let contest of registered_contest_query){
+      console.log(contest);
+    }
+
+
+    let [user_position] = await db_promise.execute(
+      `SELECT ranked_data.user_id, ud.user_name,ud.user_profile, ranked_data.points, ranked_data.position
+      FROM (
+          SELECT user_id, points, 
+          RANK() OVER(ORDER BY points DESC) AS position
+          FROM registered_contest
+          WHERE match_id = ? AND contest_id=?
+      ) AS ranked_data
+      JOIN user_details ud ON ranked_data.user_id = ud.user_id WHERE ranked_data.user_id = ?;`,
+      [match_id, contest_id, decoded_token.user_id]
+    );
+    if (user_position.length == 0) {
+      return { error: "user not found" }
+    }
+
+
     return res.json(rank_query)
   } catch (error) {
     return res.status(401).json({ status: "Failed", msg: "Invalid or expired token", error });
