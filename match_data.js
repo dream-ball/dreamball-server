@@ -90,8 +90,21 @@ const writeData = (fileName, data) => {
 async function upload_overs() {
     let overData = await readData('./data/overs_data.json');
 
-    for (const matchId in overData) {
-        const inningsData = overData[matchId];
+
+
+    for (const match_id in overData) {
+
+        const [rows] = await db_promise.execute(
+            "SELECT reference_id FROM reference WHERE match_id=?",
+            [match_id]
+        );
+        if (!rows.length) {
+            return ("Match ID not found");
+        }
+
+        const matchId = rows[0].match_id;
+
+        const inningsData = overData[match_id];
         let last_sotred_over = "SELECT * FROM overs WHERE match_id = ? ORDER BY innings DESC, over_number DESC LIMIT 1;"
         let [last_stored_over_result] = await db_promise.execute(last_sotred_over, [matchId])
         let last_innings = 1;
@@ -254,18 +267,16 @@ async function match_info(match_id) {
             error: "Overs not found"
         }
     }
-    console.log(match_id);
     const [rows] = await db_promise.execute(
         "SELECT reference_id FROM reference WHERE match_id=?",
         [match_id]
     );
-    console.log(rows);
-
     if (!rows.length) {
         return ("Match ID not found");
     }
 
     const matchId = rows[0].match_id;  // Extract match_id correctly
+    console.log(matchId);
     let matchInfo = await readData('./data/live_match_data.json').data;
     let matchData = matchInfo.filter(match => match.match_id == matchId);
 
