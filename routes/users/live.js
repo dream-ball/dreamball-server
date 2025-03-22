@@ -413,6 +413,7 @@ router.get('/api/live/user/rank/:match_id', async (req, res) => {
 
     return res.json(user_positions);
   } catch (error) {
+    console.log(error);
     return res.status(401).json({ status: "Failed", error: "Invalid or expired token", error });
   }
 });

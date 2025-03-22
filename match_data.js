@@ -254,9 +254,21 @@ async function match_info(match_id) {
             error: "Overs not found"
         }
     }
-    const [matchId] = db_promise.execute("SELECT match_id FROM refrence WHERE reference_id=?",[match_id])
-    let matchInfo = await readData('./data/live_match_data.json').data
-    let matchData = matchInfo.filter(match => match.match_id == matchId)
+
+    const [rows] = await db_promise.execute(
+        "SELECT match_id FROM reference WHERE reference_id=?",
+        [match_id]
+    );
+
+    if (!rows.length) {
+        return ("Match ID not found");
+    }
+
+    const matchId = rows[0].match_id;  // Extract match_id correctly
+    let matchInfo = await readData('./data/live_match_data.json').data;
+    let matchData = matchInfo.filter(match => match.match_id == matchId);
+
+    console.log(matchData);  // Debugging
     if (!matchData.length) {
         matchData = {
             status: "Failed",
@@ -856,7 +868,7 @@ async function initiate_prize(match_id) {
             }
         }
 
-        await connection.execute("UPDATE live_match_data SET status='ended' AND match_info=? WHERE match_id=?", [match_id,JSON.stringify(matchData)]);
+        await connection.execute("UPDATE live_match_data SET status='ended' AND match_info=? WHERE match_id=?", [match_id, JSON.stringify(matchData)]);
         await connection.execute("UPDATE contest SET status='ended' WHERE match_id=? AND status='live'", [match_id]);
         await connection.execute("UPDATE registered_contest SET status='ended' WHERE match_id=?", [match_id])
         await connection.commit();
