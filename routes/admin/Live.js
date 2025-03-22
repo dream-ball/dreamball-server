@@ -44,7 +44,6 @@ router.get("/admin/getLiveMatches", adminAuth, (req, res) => {
 
 router.get('/admin/cancelMatch/:matchId', async (req, res) => {
   let { matchId } = req.params;
-
   try {
     const deleteLiveMatchData = `UPDATE live_match_data SET status='ended' WHERE match_id = ?`;
     const revertLiveStatusRegisteredContest = `UPDATE registered_contest SET status = 'ended' WHERE match_id = ? AND status='live'`;
@@ -56,7 +55,6 @@ router.get('/admin/cancelMatch/:matchId', async (req, res) => {
       "SELECT user_id, entry_fee FROM registered_contest WHERE match_id=? AND status='live'",
       [matchId]
     );
-
     for (const user of users) {
       await db_promise.execute(
         "UPDATE user_details SET deposits = deposits + ? WHERE user_id = ?",
