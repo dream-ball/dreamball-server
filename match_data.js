@@ -364,7 +364,7 @@ async function update_leaderBoard(matchId) {
     // Update the leaderboard in one go for each user
     for (const user_id in userPoints) {
         await db_promise.execute(
-            "UPDATE leaderboard SET points = ? WHERE user_id = ? AND match_id = ?",
+            "UPDATE registered_contest SET points = ? WHERE user_id = ? AND match_id = ?",
             [userPoints[user_id], user_id, matchId]
         );
         console.log(`Updated leaderboard: User ${user_id} now has ${userPoints[user_id]} points`);
