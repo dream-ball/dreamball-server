@@ -7,7 +7,7 @@ const path = require("path");
 const adminAuth = require('../../middleware/adminAuth');
 const { db_promise } = require("../../database/db.js");
 const { read_default_contest, readData } = require('../../utils/readFile.js')
-router.get("/admin/upcomingMatches", adminAuth, (req, res) => {
+router.get("/admin/upcomingMatches", (req, res) => {
 
   const token = req.header('Authorization')?.replace("Bearer ", "");
 
