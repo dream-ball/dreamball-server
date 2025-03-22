@@ -265,16 +265,13 @@ async function getOverData(matchId, innings, overNumber) {
         return null;
     }
 }
-async function update_leaderBoard(matchId) {
+async function update_leaderBoard() {
     let [user_over_data] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?", [matchId]);
-
-    // Object to store total points for each user
     let userPoints = {};
-
     for (const user_data of user_over_data) {
         console.log(user_data);
 
-        let over = getOverData(user_data.match_id, user_data.innings, user_data.over_number);
+        let over =await getOverData(user_data.match_id, user_data.innings, user_data.over_number);
 
         if (!over || over === 0) {
             console.log(`No data found for Over ${user_data.over_number}, skipping...`);
@@ -371,11 +368,7 @@ async function update_leaderBoard(matchId) {
     }
 }
 
-
 update_leaderBoard(769970803)
-
-
-
 async function match_info(match_id) {
     let data = {}
     let oversData = await getOversData(match_id);
@@ -494,21 +487,21 @@ function update_overs() {
     })
 
 }
-
 async function run_upload_data() {
     const [matches_data] = await db_promise.execute("SELECT * FROM live_match_data WHERE status='live'")
+    matches_data.map(match=>{
+        update_leaderBoard(match.match_id)
+    })
+
     if (matches_data.length > 0) {
         await update_overs()
         await update_live_matches()
     }
 }
-
 // run_upload_data()
 // setInterval(async() => {
 //     await run_upload_data()
 // }, 10000);
-
-
 // async function update_leaderBoard(match_id) {
 //     console.log("Updating the loeaderBoard");
 //     let [overs_to] = await db_promise.execute("SELECT * FROM open_overs WHERE match_id=?", [match_id]);

@@ -144,7 +144,6 @@ router.post("/admin/close_over/:match_id", adminAuth, (req, res) => {
       return res.status(404).json({ error: "Match not found" });
     }
     console.log("Admin Closed The Over");
-    update_leaderBoard(match_id)
     res.json({ msg: "Over Updated" });
   });
 })
@@ -159,7 +158,6 @@ router.post("/admin/switch_innings/:match_id", adminAuth, (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Match not found" });
     }
-    update_leaderBoard(match_id)
     res.json({ msg: "Innings changed" });
   });
 })
