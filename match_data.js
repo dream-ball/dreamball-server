@@ -280,11 +280,11 @@ async function update_leaderBoard(matchId) {
 
         // Initialize points
         let points_gained = 0;
-        let wickets = overs_data.wickets;
-        let runs = overs_data.runs;
-        let sixes = overs_data.overs.filter(ball => ball === "6").length;
-        let four = overs_data.overs.filter(ball => ball === "4").length;
-        let dots = overs_data.overs.filter(ball => ball === "0").length;
+        let wickets = over.wickets;
+        let runs = over.runs;
+        let sixes = over.filter(ball => ball === "6").length;
+        let four = over.filter(ball => ball === "4").length;
+        let dots = over.filter(ball => ball === "0").length;
 
         // Runs Prediction
         if (user_data.run != null) {
