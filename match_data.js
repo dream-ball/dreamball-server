@@ -277,13 +277,9 @@ async function match_info(match_id) {
     if (!rows.length) {
         return ("Match ID not found");
     }
-
     const matchId = rows[0].reference_id;  // Extract match_id correctly
-    console.log(matchId);
     let matchInfo = await readData('./data/live_match_data.json').data;
     let matchData = matchInfo.filter(match => match.match_id == matchId);
-
-    console.log(matchData);  // Debugging
     if (!matchData.length) {
         matchData = {
             status: "Failed",
@@ -858,7 +854,7 @@ async function initiate_prize(match_id) {
 
                 for (let user of user_query) {
                     let user_prize = getPrize(user.position, prizeData.prizes_order);
-                    if (user_prize !== 0) {
+                    if (user_prize !== 0){
                         updatePromises.push(
                             connection.execute(
                                 "UPDATE user_details SET funds = funds + ? WHERE user_id = ?",
@@ -874,16 +870,22 @@ async function initiate_prize(match_id) {
             }
         }
 
+        const [rows] = await db_promise.execute(
+            "SELECT reference_id FROM reference WHERE match_id=?",
+            [match_id]
+        );
+        if (!rows.length) {
+            return ("Match ID not found");
+        }
+        const matchId = rows[0].reference_id;
         let matchInfo = await readData('./data/live_match_data.json').data
-        let matchData = matchInfo.filter(match => match.match_id == match_id)
+        let matchData = matchInfo.filter(match => match.match_id == matchId)
         if (!matchData.length) {
-            matchData = {
-                status: "Failed",
-                error: "Match details not found while trying to Update end live"
-            }
+            matchData = [{ status: "Failed", error: "Match details not found while trying to update end live" }];
         }
 
-        await connection.execute("UPDATE live_match_data SET status='ended' AND match_info=? WHERE match_id=?", [match_id, JSON.stringify(matchData)]);
+
+        await connection.execute("UPDATE live_match_data SET status='ended' ,match_info=? WHERE match_id=?", [match_id, JSON.stringify(matchData)]);
         await connection.execute("UPDATE contest SET status='ended' WHERE match_id=? AND status='live'", [match_id]);
         await connection.execute("UPDATE registered_contest SET status='ended' WHERE match_id=?", [match_id])
         await connection.commit();
@@ -897,25 +899,25 @@ async function initiate_prize(match_id) {
         connection.release(); // ✅ Ensure connection is always released
     }
 }
-async function upcoming_matches(matchList) {
-    let data = readData('./data/upcoming_match_data.json').data;
+// async function upcoming_matches(matchList) {
+//     let data = readData('./data/upcoming_match_data.json').data;
 
-    if (matchList) {
-        let m_data = data.filter(match => matchList.includes(match.match_id));
-        return m_data.length ? m_data : 0;
-    } else {
-        let match_query = "SELECT match_id FROM matches WHERE 1";
-        const result = await new Promise((resolve, reject) => {
-            db.query(match_query, (error, results) => {
-                if (error) reject(error);
-                else resolve(results);
-            });
-        });
-        let match_array = result.map(match => match.match_id);
-        let m_data = data.filter(match => match_array.includes(match.match_id));
-        return m_data.length ? m_data : 0;
-    }
-}
+//     if (matchList) {
+//         let m_data = data.filter(match => matchList.includes(match.match_id));
+//         return m_data.length ? m_data : 0;
+//     } else {
+//         let match_query = "SELECT match_id FROM matches WHERE 1";
+//         const result = await new Promise((resolve, reject) => {
+//             db.query(match_query, (error, results) => {
+//                 if (error) reject(error);
+//                 else resolve(results);
+//             });
+//         });
+//         let match_array = result.map(match => match.match_id);
+//         let m_data = data.filter(match => match_array.includes(match.match_id));
+//         return m_data.length ? m_data : 0;
+//     }
+// }
 function groupAndDisplayPrizes(prizeDistribution) {
     /**
      * Group and display prizes in the desired format.
@@ -1005,4 +1007,4 @@ function ranking_order(registeredPlayers, entryFee, platformFeeFilled, platformF
     return ({ "prizes_order": groupAndDisplayPrizes(result.prizeDistribution), "prize_pool": result.prizePool });
 }
 
-module.exports = { match_info, upcoming_matches, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard, prizeOrder, getPrize };
+module.exports = { match_info, ranking_order, getOverData, update_leaderBoard, leaderBoard, finals_leaderBoard, prizeOrder, getPrize };
