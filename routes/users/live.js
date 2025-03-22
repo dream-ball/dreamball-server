@@ -352,8 +352,14 @@ router.get('/api/live/user/history/:match_id', async (req, res) => {
   }
 })
 
-router.get('/api/live/user/rank/:match_is', async (req, res) => {
+router.get('/api/live/user/rank/:match_id', async (req, res) => {
   const { match_id } = req.params
+
+
+  if (!Number.isInteger(Number(match_id))) {
+    res.status(400).json({ error: "Invalid match ID" });
+    return;
+  }
   const token = req.header('Authorization')?.replace('Bearer ', '');
   try {
     let decoded_token=validateJWT(token)
@@ -364,7 +370,7 @@ router.get('/api/live/user/rank/:match_is', async (req, res) => {
     }
     return res.json(rank_query)
   } catch (error) {
-    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token",error });
+    return res.status(401).json({ status: "Failed", msg: "Invalid or expired token" });
 
   }
 })
