@@ -222,7 +222,7 @@ async function getOversData(matchId) {
     }
 }
 
-console.log(getsOverData("0769970803"))
+// console.log(getsOverData("0769970803"))
 async function getOverData(matchId, innings, overNumber) {
     console.log(matchId,innings,overNumber);
     try {
