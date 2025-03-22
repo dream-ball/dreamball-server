@@ -279,7 +279,7 @@ async function update_leaderBoard(matchId) {
         console.log(user_data);
 
         // Assuming user_data has an innings and over_number field
-        let over = getOverData(user_data.match_id, user_data.innings, user_data.over_number);
+        let over =await getOverData(user_data.match_id, user_data.innings, user_data.over_number);
         console.log(over);
     }
 }
