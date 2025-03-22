@@ -265,7 +265,7 @@ async function getOverData(matchId, innings, overNumber) {
         return null;
     }
 }
-async function update_leaderBoard() {
+async function update_leaderBoard(matchId) {
     let [user_over_data] = await db_promise.execute("SELECT * FROM user_over_data WHERE match_id=?", [matchId]);
     let userPoints = {};
     for (const user_data of user_over_data) {
